@@ -1,19 +1,23 @@
 {
   "id": "pelispop",
   "name": "PelisPop",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "apiVersion": 8,
   "entry": "plugin.js",
   "icon": "icon.png",
   "color": "#03c1ef",
-  "description": "Películas, series y anime de PelisPop en español latino con interfaz de pantalla completa integrada.",
+  "description": "Películas, series y anime de PelisPop en español latino con interfaz declarativa completa y servidores de reproducción rápida HLS.",
   "author": "JuanDEVYT",
   "homepage": "https://github.com/JuanDEVYT/kino-plugin-pelispop",
   "browser": true,
   "hosts": [
     "pelispop.mov",
     "embed69.org",
-    "xupalace.org",
+    "repelisplus.my",
+    "watchfun.top",
+    "nupload.my",
+    "sv3.ibra.lat",
+    "cnddim.xyz",
     "api.themoviedb.org",
     "image.tmdb.org",
     "raw.githubusercontent.com"
@@ -71,14 +75,14 @@
     {
       "key": "serverPreference",
       "type": "select",
-      "default": "embed69",
+      "default": "hls",
       "label": "Servidor de vídeo",
       "labelEn": "Video Server",
       "hint": "Servidor principal para reproducir enlaces.",
       "hintEn": "Main server used for video streaming.",
       "options": [
-        { "value": "embed69", "label": "Embed69 (Recomendado)", "labelEn": "Embed69 (Recommended)" },
-        { "value": "direct", "label": "Directo / HLS", "labelEn": "Direct / HLS" }
+        { "value": "hls", "label": "HLS Rápido Latino (Recomendado)", "labelEn": "Fast HLS Latino (Recommended)" },
+        { "value": "embed69", "label": "Embed69", "labelEn": "Embed69" }
       ]
     },
     {
