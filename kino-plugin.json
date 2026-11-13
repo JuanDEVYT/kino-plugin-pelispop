@@ -1,0 +1,125 @@
+{
+  "id": "pelispop",
+  "name": "PelisPop",
+  "version": "1.0.0",
+  "apiVersion": 8,
+  "entry": "plugin.js",
+  "icon": "icon.png",
+  "color": "#03c1ef",
+  "description": "Películas, series y anime de PelisPop en español latino con interfaz de pantalla completa integrada (Screen).",
+  "author": "JuanDEVYT",
+  "homepage": "https://github.com/JuanDEVYT/kino-plugin-pelispop",
+  "hosts": [
+    "pelispop.mov",
+    "embed69.org",
+    "xupalace.org",
+    "api.themoviedb.org",
+    "image.tmdb.org",
+    "raw.githubusercontent.com"
+  ],
+  "streamHosts": "any",
+  "capabilities": [
+    "search",
+    "home",
+    "browse",
+    "episodes",
+    "resolve"
+  ],
+  "categories": [
+    "movies",
+    "series",
+    "anime"
+  ],
+  "section": {
+    "label": "PelisPop",
+    "labelEn": "PelisPop"
+  },
+  "enhancements": {
+    "14": {
+      "capabilities": [
+        "screen"
+      ],
+      "screen": {
+        "label": "PelisPop",
+        "labelEn": "PelisPop",
+        "icon": "movie",
+        "menuOpens": "screen",
+        "opensFrom": [
+          "menu",
+          "settings"
+        ],
+        "settingsButton": {
+          "label": "Abrir PelisPop",
+          "labelEn": "Open PelisPop"
+        },
+        "settingsIn": "screen"
+      }
+    },
+    "19": {
+      "capabilities": [
+        "screen"
+      ]
+    }
+  },
+  "settings": [
+    {
+      "key": "generalSection",
+      "type": "section",
+      "label": "Configuración General",
+      "labelEn": "General Settings"
+    },
+    {
+      "key": "serverPreference",
+      "type": "select",
+      "default": "embed69",
+      "label": "Servidor de vídeo",
+      "labelEn": "Video Server",
+      "hint": "Servidor principal para reproducir enlaces.",
+      "hintEn": "Main server used for video streaming.",
+      "options": [
+        {
+          "value": "embed69",
+          "label": "Embed69 (Recomendado)",
+          "labelEn": "Embed69 (Recommended)"
+        },
+        {
+          "value": "direct",
+          "label": "Directo / HLS",
+          "labelEn": "Direct / HLS"
+        }
+      ]
+    },
+    {
+      "key": "preferredQuality",
+      "type": "select",
+      "default": "1080p",
+      "label": "Calidad preferida",
+      "labelEn": "Preferred Quality",
+      "hint": "Resolución predeterminada para reproducción.",
+      "hintEn": "Default resolution for playback.",
+      "options": [
+        {
+          "value": "1080p",
+          "label": "1080p (Full HD)",
+          "labelEn": "1080p (Full HD)"
+        },
+        {
+          "value": "720p",
+          "label": "720p (HD)",
+          "labelEn": "720p (HD)"
+        },
+        {
+          "value": "auto",
+          "label": "Automática",
+          "labelEn": "Automatic"
+        }
+      ]
+    },
+    {
+      "key": "openPortal",
+      "type": "action",
+      "label": "Abrir portal PelisPop",
+      "labelEn": "Open PelisPop Portal"
+    }
+  ]
+}
