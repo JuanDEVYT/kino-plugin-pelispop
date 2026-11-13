@@ -1,14 +1,15 @@
 {
   "id": "pelispop",
   "name": "PelisPop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "apiVersion": 8,
   "entry": "plugin.js",
   "icon": "icon.png",
   "color": "#03c1ef",
-  "description": "Películas, series y anime de PelisPop en español latino con interfaz de pantalla completa integrada (Screen).",
+  "description": "Películas, series y anime de PelisPop en español latino con interfaz de pantalla completa integrada.",
   "author": "JuanDEVYT",
   "homepage": "https://github.com/JuanDEVYT/kino-plugin-pelispop",
+  "browser": true,
   "hosts": [
     "pelispop.mov",
     "embed69.org",
@@ -51,8 +52,7 @@
         "settingsButton": {
           "label": "Abrir PelisPop",
           "labelEn": "Open PelisPop"
-        },
-        "settingsIn": "screen"
+        }
       }
     },
     "19": {
@@ -77,42 +77,8 @@
       "hint": "Servidor principal para reproducir enlaces.",
       "hintEn": "Main server used for video streaming.",
       "options": [
-        {
-          "value": "embed69",
-          "label": "Embed69 (Recomendado)",
-          "labelEn": "Embed69 (Recommended)"
-        },
-        {
-          "value": "direct",
-          "label": "Directo / HLS",
-          "labelEn": "Direct / HLS"
-        }
-      ]
-    },
-    {
-      "key": "preferredQuality",
-      "type": "select",
-      "default": "1080p",
-      "label": "Calidad preferida",
-      "labelEn": "Preferred Quality",
-      "hint": "Resolución predeterminada para reproducción.",
-      "hintEn": "Default resolution for playback.",
-      "options": [
-        {
-          "value": "1080p",
-          "label": "1080p (Full HD)",
-          "labelEn": "1080p (Full HD)"
-        },
-        {
-          "value": "720p",
-          "label": "720p (HD)",
-          "labelEn": "720p (HD)"
-        },
-        {
-          "value": "auto",
-          "label": "Automática",
-          "labelEn": "Automatic"
-        }
+        { "value": "embed69", "label": "Embed69 (Recomendado)", "labelEn": "Embed69 (Recommended)" },
+        { "value": "direct", "label": "Directo / HLS", "labelEn": "Direct / HLS" }
       ]
     },
     {

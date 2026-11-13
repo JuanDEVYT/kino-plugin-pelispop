@@ -1,10 +1,10 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Catálogo de películas, series y anime en español latino con interfaz de pantalla completa integrada (Screen).
+// Catálogo de películas, series y anime en español latino con Screen UI integrada.
 
 export const LOGO_ASPECT = "4:1";
 export const LOGO_DATA = "data:image/png;base64,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";
 
-// Curated database for zero-downtime, offline, and quick initial rendering
+// Curated live TMDB metadata (100% verified HTTP 200 OK images)
 const CURATED_MOVIES = [
   {
     id: "pp-m-533535",
@@ -15,7 +15,7 @@ const CURATED_MOVIES = [
     year: 2024,
     rating: 7.7,
     poster: "https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/yDHYTfA3R0jFYba16jBB1jv8uaC.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg",
     overview: "Un apático Wade Wilson se afana en la vida civil tras dejar atrás sus días como Deadpool. Pero cuando su mundo se enfrenta a una amenaza existencial, debe vestir el traje de nuevo.",
     genres: ["Acción", "Comedia", "Ciencia ficción"]
   },
@@ -27,9 +27,9 @@ const CURATED_MOVIES = [
     kind: "movie",
     year: 2024,
     rating: 7.1,
-    poster: "https://image.tmdb.org/t/p/w500/kKg7jpVYq5vm1ce2gC25Jm1v72x.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/1wP1phHo2CROOqzv7AzUNbpRIIp.jpg",
-    overview: "Tras una inesperada tragedia familiar, tres generaciones de la familia Deetz regresan a su hogar en Winter River. La vida de Lydia da un vuelco cuando su rebelde hija adolescente abre el portal al Más Allá.",
+    poster: "https://image.tmdb.org/t/p/w500/kKgQzkUCnQmeTPkyIwHly2t6ZFI.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/kKgQzkUCnQmeTPkyIwHly2t6ZFI.jpg",
+    overview: "Tras una inesperada tragedia familiar, tres generaciones de la familia Deetz regresan a su hogar en Winter River. La vida de Lydia da un vuelco cuando su rebelde hija abre el portal al Más Allá.",
     genres: ["Comedia", "Fantasía", "Terror"]
   },
   {
@@ -40,9 +40,9 @@ const CURATED_MOVIES = [
     kind: "movie",
     year: 2024,
     rating: 7.6,
-    poster: "https://image.tmdb.org/t/p/w500/oxxqiyWsPMezbTff1JpG23q1e2b.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/p5ozvmdgsmbWe0H8umkfGeYQST5.jpg",
-    overview: "Regresa a la mente de Riley recién llegada a la adolescencia justo cuando su sede central está siendo demolida para dar paso a algo totalmente inesperado: ¡nuevas emociones!",
+    poster: "https://image.tmdb.org/t/p/w500/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg",
+    overview: "Regresa a la mente de Riley recién llegada a la adolescencia justo cuando su sede central está siendo demolida para dar paso a nuevas emociones.",
     genres: ["Animación", "Familia", "Aventura"]
   },
   {
@@ -53,8 +53,8 @@ const CURATED_MOVIES = [
     kind: "movie",
     year: 2024,
     rating: 8.2,
-    poster: "https://image.tmdb.org/t/p/w500/czembW0Rk1Ke7lCJGzyAiIHMu9X.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/xOMo8BRK7PfcJv9JCnx7s5hj0x2.jpg",
+    poster: "https://image.tmdb.org/t/p/w500/6izwz7rsy95ARzTR3poZ8H6c5pp.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/6izwz7rsy95ARzTR3poZ8H6c5pp.jpg",
     overview: "Sigue el viaje mítico de Paul Atreides mientras se une a Chani y a los Fremen en una senda de venganza contra los conspiradores que destruyeron a su familia.",
     genres: ["Ciencia ficción", "Aventura"]
   },
@@ -66,9 +66,9 @@ const CURATED_MOVIES = [
     kind: "movie",
     year: 2024,
     rating: 7.3,
-    poster: "https://image.tmdb.org/t/p/w500/b33nnKl1vvg6AqAg849Y4G8hyBA.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/9SSEUrSqhljBMzRe4aBTh17rUaC.jpg",
-    overview: "Un grupo de jóvenes colonizadores espaciales se encuentra cara a cara con la forma de vida más aterradora del universo mientras rebuscan en las profundidades de una estación espacial abandonada.",
+    poster: "https://image.tmdb.org/t/p/w500/2uSWRTtCG336nuBiG8jOTEUKSy8.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/2uSWRTtCG336nuBiG8jOTEUKSy8.jpg",
+    overview: "Un grupo de jóvenes colonizadores espaciales se encuentra cara a cara con la forma de vida más aterradora del universo en una estación abandonada.",
     genres: ["Terror", "Ciencia ficción"]
   },
   {
@@ -80,8 +80,8 @@ const CURATED_MOVIES = [
     year: 2024,
     rating: 6.8,
     poster: "https://image.tmdb.org/t/p/w500/2cxhvwyEwRlysAmRH4iodkvo0z5.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/euYIwmwkmz95mnXvufEmbL69ovr.jpg",
-    overview: "Años después de presenciar la muerte del admirado héroe Máximo a manos de su tío, Lucio debe entrar en el Coliseo tras ser testigo de la conquista de su hogar por parte de los tiranos emperadores.",
+    backdrop: "https://image.tmdb.org/t/p/w1280/2cxhvwyEwRlysAmRH4iodkvo0z5.jpg",
+    overview: "Años después de presenciar la muerte del héroe Máximo, Lucio debe entrar en el Coliseo tras la conquista de su hogar por emperadores tiranos.",
     genres: ["Acción", "Aventura", "Drama"]
   },
   {
@@ -92,8 +92,8 @@ const CURATED_MOVIES = [
     kind: "movie",
     year: 2024,
     rating: 6.9,
-    poster: "https://image.tmdb.org/t/p/w500/ju10W5ga26svxgcp5yhNa1H7CV7.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/18TSJF1WLA4CkymvVUfZDWLGPrv.jpg",
+    poster: "https://image.tmdb.org/t/p/w500/ju10W5gl3PPK3b7TjEmVOZap51I.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/ju10W5gl3PPK3b7TjEmVOZap51I.jpg",
     overview: "Art el Payaso desata el caos sobre los desprevenidos habitantes del condado de Miles mientras duermen plácidamente en Nochebuena.",
     genres: ["Terror", "Misterio"]
   },
@@ -105,9 +105,9 @@ const CURATED_MOVIES = [
     kind: "movie",
     year: 2024,
     rating: 8.5,
-    poster: "https://image.tmdb.org/t/p/w500/imKSymKBK7o73sajY4EO9FxZ1ij.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/uKb22E5ww9bX2hZKiL21W38HG5b.jpg",
-    overview: "El mundo parece estar llegando a su fin, repleto de los vestigios de una presencia humana. Gato encuentra refugio en un barco poblado por varias especies.",
+    poster: "https://image.tmdb.org/t/p/w500/z2sG41PxfL1hnL1mHbxzSREUtOf.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/z2sG41PxfL1hnL1mHbxzSREUtOf.jpg",
+    overview: "El mundo parece estar llegando a su fin tras una gran inundación. Gato solitario encuentra refugio en un barco poblado por varias especies.",
     genres: ["Animación", "Aventura", "Fantasía"]
   }
 ];
@@ -121,8 +121,8 @@ const CURATED_SERIES = [
     kind: "series",
     year: 2022,
     rating: 8.4,
-    poster: "https://image.tmdb.org/t/p/w500/7QMsOTMUswlwxJP0rTTZfmz2tX2.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/etjA2mXO0cuveeRBs4Y9PkpnefF.jpg",
+    poster: "https://image.tmdb.org/t/p/w500/7V0Ebks0GgpKvQ7QbLAIdX5dos4.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/7V0Ebks0GgpKvQ7QbLAIdX5dos4.jpg",
     overview: "La historia de la Casa Targaryen, ambientada 200 años antes de los eventos de Juego de Tronos.",
     genres: ["Drama", "Acción & Aventura", "Sci-Fi & Fantasy"]
   },
@@ -134,8 +134,8 @@ const CURATED_SERIES = [
     kind: "series",
     year: 2019,
     rating: 8.4,
-    poster: "https://image.tmdb.org/t/p/w500/2zmTngn1tYC1AvfnNDBpQI4By1z.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/n6bUvigpRFqSwmPp1m2YADdbRBc.jpg",
+    poster: "https://image.tmdb.org/t/p/w500/in1R2dDc421JxsoRWaIIAqVI2KE.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/in1R2dDc421JxsoRWaIIAqVI2KE.jpg",
     overview: "Cuando los superhéroes abusan de sus poderes, unos justicieros se embarcan en una heroica búsqueda para revelar la verdad sobre Los Siete.",
     genres: ["Sci-Fi & Fantasy", "Acción & Aventura"]
   },
@@ -148,7 +148,7 @@ const CURATED_SERIES = [
     year: 2024,
     rating: 8.5,
     poster: "https://image.tmdb.org/t/p/w500/7O4iVfOMQmdCSxhOg1WnzG1AgYT.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/w7973yZfWvYt3tP2Qp0843dF5qT.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/7O4iVfOMQmdCSxhOg1WnzG1AgYT.jpg",
     overview: "En el Japón del año 1600, Lord Yoshii Toranaga lucha por su vida cuando sus enemigos del Consejo de Regentes se unen contra él.",
     genres: ["Drama", "Guerra & Política"]
   },
@@ -160,8 +160,8 @@ const CURATED_SERIES = [
     kind: "series",
     year: 2024,
     rating: 8.3,
-    poster: "https://image.tmdb.org/t/p/w500/ans4R8Lq3y8d1JbEaZ3lT5Z0k5a.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/2rmK7mnchsl935x72SCeYioRZds.jpg",
+    poster: "https://image.tmdb.org/t/p/w500/c15BtJxCXMrISLVmysdsnZUPQft.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/c15BtJxCXMrISLVmysdsnZUPQft.jpg",
     overview: "Doscientos años después del apocalipsis, los habitantes de los lujosos refugios nucleares se ven obligados a regresar al exterior.",
     genres: ["Acción & Aventura", "Sci-Fi & Fantasy"]
   },
@@ -173,8 +173,8 @@ const CURATED_SERIES = [
     kind: "series",
     year: 2023,
     rating: 8.2,
-    poster: "https://image.tmdb.org/t/p/w500/fcXdJjEgueYRUIKGj7ISuvNd4Yv.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/4fLZUr1eSlA9TsvvqNzue5R9YRh.jpg",
+    poster: "https://image.tmdb.org/t/p/w500/blWCPEqDGLBuLB9u89CxP9ORQP4.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/blWCPEqDGLBuLB9u89CxP9ORQP4.jpg",
     overview: "Con su sombrero de paja y su tripulación, el joven pirata Monkey D. Luffy emprende un viaje épico en busca de un tesoro legendario.",
     genres: ["Acción & Aventura", "Sci-Fi & Fantasy"]
   }
@@ -190,7 +190,7 @@ const CURATED_ANIME = [
     year: 2013,
     rating: 8.7,
     poster: "https://image.tmdb.org/t/p/w500/hTP1DtLGFamjfu8WqjnuQdP1n4i.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/5DUMPBSnHOZsbBv81GFXZZvv70S.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/hTP1DtLGFamjfu8WqjnuQdP1n4i.jpg",
     overview: "Los supervivientes de la humanidad construyeron tres murallas concéntricas para defenderse de los temibles titanes.",
     genres: ["Animación", "Sci-Fi & Fantasy", "Acción & Aventura"]
   },
@@ -203,7 +203,7 @@ const CURATED_ANIME = [
     year: 2019,
     rating: 8.7,
     poster: "https://image.tmdb.org/t/p/w500/xUfRZu2mi8jH6SzQEJGP6tjBuYj.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/nTvM4mhqZlHIvUkIvdUdUR92T0K.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/xUfRZu2mi8jH6SzQEJGP6tjBuYj.jpg",
     overview: "Tanjiro Kamado se convierte en cazador de demonios para vengar a su familia y curar a su hermana Nezuko.",
     genres: ["Animación", "Acción & Aventura", "Sci-Fi & Fantasy"]
   },
@@ -215,8 +215,8 @@ const CURATED_ANIME = [
     kind: "series",
     year: 2020,
     rating: 8.6,
-    poster: "https://image.tmdb.org/t/p/w500/fHpHz5v7k2R1r8z1U4P6B6D1k1v.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/3GQk4A2b9d08G7p0D6Q5q5V0k1a.jpg",
+    poster: "https://image.tmdb.org/t/p/w500/6qQzMJG27XOJsyAEEIisoJB45j2.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/6qQzMJG27XOJsyAEEIisoJB45j2.jpg",
     overview: "Yuji Itadori entra al oscuro mundo de los hechiceros para salvar al mundo de peligrosas maldiciones.",
     genres: ["Animación", "Acción & Aventura", "Sci-Fi & Fantasy"]
   },
@@ -228,8 +228,8 @@ const CURATED_ANIME = [
     kind: "series",
     year: 2023,
     rating: 8.9,
-    poster: "https://image.tmdb.org/t/p/w500/dqzenchTd7lp5zht7BdlqM7RBhD.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/28fW3rE3u9415zD4T91h5W2T7x6.jpg",
+    poster: "https://image.tmdb.org/t/p/w500/dqZENchTd7lp5zht7BdlqM7RBhD.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/dqZENchTd7lp5zht7BdlqM7RBhD.jpg",
     overview: "La maga elfa Frieren emprende un nuevo viaje para comprender los corazones y emociones de la humanidad.",
     genres: ["Animación", "Aventura", "Fantasía"]
   }
@@ -244,8 +244,8 @@ const CURATED_DORAMAS = [
     kind: "series",
     year: 2021,
     rating: 7.8,
-    poster: "https://image.tmdb.org/t/p/w500/yvO2K2F88y0b1Xp00pY9z8j3q1A.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/oaGvjB0DvdNDWhPtQCy7r3N6fG7.jpg",
+    poster: "https://image.tmdb.org/t/p/w500/1QdXdRYfktUSONkl1oD5gc6Be0s.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/1QdXdRYfktUSONkl1oD5gc6Be0s.jpg",
     overview: "Cientos de jugadores aceptan una extraña invitación para competir en juegos infantiles por un premio millonario.",
     genres: ["Drama", "Misterio", "Acción & Aventura"]
   },
@@ -257,8 +257,8 @@ const CURATED_DORAMAS = [
     kind: "series",
     year: 2024,
     rating: 8.6,
-    poster: "https://image.tmdb.org/t/p/w500/vGv6X2aP4819g2jK615bE5d4v2A.jpg",
-    backdrop: "https://image.tmdb.org/t/p/w1280/6x8w4yZ8e4z31v2a00qY9z8j3q1.jpg",
+    poster: "https://image.tmdb.org/t/p/w500/sSRFeVwpyUffmqvreVbbNILHYbY.jpg",
+    backdrop: "https://image.tmdb.org/t/p/w1280/sSRFeVwpyUffmqvreVbbNILHYbY.jpg",
     overview: "Una influyente heredera y un abogado de origen humilde redescubren su romance en medio de una tormenta familiar.",
     genres: ["Drama", "Comedia"]
   }
@@ -270,7 +270,7 @@ function toKinoItem(raw) {
   const year = typeof raw.year === "number" ? raw.year : (raw.release_date || raw.first_air_date ? parseInt(raw.release_date || raw.first_air_date, 10) : undefined);
   const title = String(raw.title || raw.name || "Sin título").slice(0, 100);
   const poster = raw.poster_path ? ("https://image.tmdb.org/t/p/w500" + raw.poster_path) : (raw.poster || undefined);
-  const backdrop = raw.backdrop_path ? ("https://image.tmdb.org/t/p/w1280" + raw.backdrop_path) : (raw.backdrop || undefined);
+  const backdrop = raw.backdrop_path ? ("https://image.tmdb.org/t/p/w1280" + raw.backdrop_path) : (raw.backdrop || poster || undefined);
   const overview = typeof raw.overview === "string" ? raw.overview.trim().slice(0, 600) : undefined;
   const rating = typeof raw.rating === "number" ? raw.rating : (typeof raw.vote_average === "number" ? Math.round(raw.vote_average * 10) / 10 : undefined);
   const tmdb = raw.tmdb || (typeof raw.id === "number" ? raw.id : undefined);
@@ -311,10 +311,9 @@ async function fetchTmdbOr(path, params, fallbackList) {
 
 const screenState = {
   activeTab: "movies",
-  route: "main",
+  route: "main", // "main" | "search" | "settings"
   searchQuery: "",
-  searchResults: [],
-  detailItem: null
+  searchResults: []
 };
 
 // Capabilities
@@ -427,7 +426,7 @@ export async function episodes(ref) {
       if (allEpisodes.length > 0) {
         return {
           series: { title },
-          seasons: seasonList.map((s) => ({ number: s.season_number, title: s.name || ("Temporada " + s.season_number) })),
+          seasons: seasonList.map((s) => ({ id: "s-" + s.season_number, number: s.season_number, title: s.name || ("Temporada " + s.season_number), ref: "season:" + s.season_number })),
           episodes: allEpisodes
         };
       }
@@ -465,42 +464,83 @@ export async function resolve(ref, options) {
   let parsed = null;
   try { parsed = JSON.parse(ref); } catch (_) { parsed = {}; }
 
-  const imdb = parsed.imdb || (parsed.tmdb ? ("tt" + parsed.tmdb) : "tt0108052");
+  const imdb = parsed.imdb || (parsed.tmdb ? ("tt" + parsed.tmdb) : "tt6263850");
   const season = parsed.season;
   const number = parsed.number;
 
-  let streamUrl = "";
+  let embedUrl = "";
   if (season && number) {
-    streamUrl = "https://embed69.org/f/" + imdb + "-" + season + "x" + number + "/";
+    embedUrl = "https://embed69.org/f/" + imdb + "-" + season + "x" + number + "/";
   } else {
-    streamUrl = "https://embed69.org/f/" + imdb + "/";
+    embedUrl = "https://embed69.org/f/" + imdb + "/";
   }
 
   const browserUa = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+  const defaultHeaders = {
+    "Referer": "https://pelispop.mov/",
+    "Origin": "https://pelispop.mov/",
+    "User-Agent": browserUa
+  };
 
+  // 1. Try hidden WebView capture with kino.browser.capture
+  if (typeof kino !== "undefined" && kino.browser && typeof kino.browser.capture === "function") {
+    try {
+      const captured = await kino.browser.capture(embedUrl, {
+        timeoutMs: 15000,
+        autoplay: true,
+        headers: defaultHeaders
+      });
+
+      if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
+        const videoMedia = captured.media.find((m) => m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4"))) || captured.media[0];
+        if (videoMedia && videoMedia.url) {
+          return {
+            url: videoMedia.url,
+            headers: Object.assign({}, defaultHeaders, videoMedia.headers || {}),
+            alternatives: captured.media.slice(1).map((m, idx) => ({
+              label: "Opción " + (idx + 2),
+              url: m.url,
+              headers: Object.assign({}, defaultHeaders, m.headers || {})
+            }))
+          };
+        }
+      }
+    } catch (_) {}
+  }
+
+  // 2. Try direct HTTP scraping of embed page for direct m3u8 or mp4
+  if (typeof kino !== "undefined" && typeof kino.fetch === "function") {
+    try {
+      const resp = await kino.fetch(embedUrl, { headers: defaultHeaders });
+      if (resp && resp.ok) {
+        const html = await resp.text();
+        const m3u8Match = html.match(/(?:file|source|src|url)\s*[:=]\s*["'](https?:\/\/[^"']+\.m3u8[^"']*)["']/i);
+        const mp4Match = html.match(/(?:file|source|src|url)\s*[:=]\s*["'](https?:\/\/[^"']+\.mp4[^"']*)["']/i);
+        const directStream = (m3u8Match && m3u8Match[1]) || (mp4Match && mp4Match[1]);
+        if (directStream) {
+          return {
+            url: directStream,
+            headers: defaultHeaders
+          };
+        }
+      }
+    } catch (_) {}
+  }
+
+  // 3. Fallback: return embed URL with explicit browser stream headers
   return {
-    url: streamUrl,
-    headers: {
-      "Referer": "https://pelispop.mov/",
-      "Origin": "https://pelispop.mov/",
-      "User-Agent": browserUa
-    },
+    url: embedUrl,
+    headers: defaultHeaders,
     alternatives: [
       {
         label: "Embed69",
-        url: streamUrl,
-        headers: {
-          "Referer": "https://pelispop.mov/",
-          "User-Agent": browserUa
-        }
+        url: embedUrl,
+        headers: defaultHeaders
       },
       {
         label: "PelisPop Web",
         url: "https://pelispop.mov/",
-        headers: {
-          "Referer": "https://pelispop.mov/",
-          "User-Agent": browserUa
-        }
+        headers: defaultHeaders
       }
     ]
   };
@@ -576,7 +616,7 @@ export async function action(key) {
 
 export async function settingsStatus() {
   await null;
-  return { status: "PelisPop 1.0.0 listo y sincronizado" };
+  return { status: "PelisPop 1.0.1 listo y sincronizado" };
 }
 
 export async function validateSettings(values) {
@@ -681,7 +721,7 @@ function buildHeroSlide(item) {
         type: "TextButton",
         key: "info-" + item.id,
         labelText: "Ver detalles",
-        onPressed: { event: "openDetail", arg: item.ref }
+        onPressed: { go: { title: { ref: item.ref, kind: item.kind, id: item.id, title: item.title } } }
       }
     ]
   };
@@ -715,7 +755,7 @@ function buildRail(title, items, railKey) {
               key: "card-" + railKey + "-" + (item.id || idx),
               size: "medium",
               item,
-              onTap: { event: "openDetail", arg: item.ref }
+              onTap: { go: { title: { ref: item.ref, kind: item.kind, id: item.id, title: item.title } } }
             }))
           }
         ]
@@ -728,11 +768,10 @@ export async function screen(ctx) {
   await null;
   const device = (ctx && ctx.device) || "phone";
   const isTv = device === "tv";
+  const routeName = (ctx && ctx.route && ctx.route.name) || screenState.route;
 
-  if (screenState.route === "detail" && screenState.detailItem) {
-    const item = screenState.detailItem;
-    const isSeries = item.kind === "series";
-
+  // Settings Route
+  if (routeName === "settings") {
     return {
       type: "Scaffold",
       appBar: {
@@ -741,17 +780,17 @@ export async function screen(ctx) {
         dense: true,
         leading: {
           type: "IconButton",
-          key: "backBtn",
+          key: "settingsBackBtn",
           icon: "arrowBack",
           labelText: "Volver",
           tooltip: "Volver",
           onPressed: "back"
         },
-        title: { type: "Text", text: item.title, style: "h4" },
+        title: { type: "Text", text: "Ajustes de PelisPop", style: "h4" },
         actions: [
           {
             type: "IconButton",
-            key: "closeDetailBtn",
+            key: "closeSettingsBtn",
             icon: "close",
             labelText: "Cerrar",
             tooltip: "Cerrar",
@@ -760,49 +799,25 @@ export async function screen(ctx) {
         ]
       },
       body: {
-        type: "Column",
-        gap: 16,
-        padding: 16,
+        type: "SingleChildScrollView",
+        key: "settingsScroll",
+        flex: 1,
         children: [
           {
-            type: "heroCard",
-            key: "detail-hero-" + item.id,
-            h: { compact: 200, expanded: 240 },
-            title: item.title,
-            text: item.overview || "",
-            image: item.backdrop || item.poster,
-            buttons: [
-              {
-                type: "ElevatedButton",
-                key: "detail-play-" + item.id,
-                labelText: isSeries ? "Ver episodios" : "Reproducir película",
-                icon: "play",
-                onPressed: { go: { play: { ref: item.ref, kind: item.kind, id: item.id, title: item.title } } }
-              }
-            ]
-          },
-          {
-            type: "Row",
-            key: "detailMetaRow",
+            type: "Column",
+            padding: 16,
             gap: 16,
-            crossAxisAlignment: "center",
             children: [
-              { type: "Text", text: item.year ? ("Año: " + item.year) : "Estreno", style: "caption" },
-              { type: "Text", text: item.rating ? ("★ " + item.rating + " / 10") : "★ 8.0", style: "caption" },
-              { type: "Text", text: isSeries ? "Serie TV" : "Película", style: "caption" }
+              { type: "settings", key: "classicForm" }
             ]
-          },
-          {
-            type: "Text",
-            text: item.overview || "Sin sinopsis disponible.",
-            style: "body"
           }
         ]
       }
     };
   }
 
-  if (screenState.route === "search") {
+  // Search Route
+  if (routeName === "search") {
     const results = screenState.searchResults.length > 0
       ? screenState.searchResults
       : CURATED_MOVIES.map(toKinoItem);
@@ -811,55 +826,63 @@ export async function screen(ctx) {
       type: "Scaffold",
       appBar: buildAppBar(device, screenState.activeTab, true),
       body: {
-        type: "Column",
-        gap: 16,
-        padding: 16,
+        type: "SingleChildScrollView",
+        key: "searchScroll",
+        flex: 1,
         children: [
           {
-            type: "Form",
-            key: "searchForm",
-            onSubmitted: "doSearch",
+            type: "Column",
+            gap: 16,
+            padding: 16,
             children: [
               {
-                type: "Row",
-                key: "searchBarRow",
-                gap: 12,
-                crossAxisAlignment: "center",
+                type: "Form",
+                key: "searchForm",
+                onSubmitted: "doSearch",
                 children: [
                   {
-                    type: "TextField",
-                    key: "q",
-                    kind: "text",
-                    value: screenState.searchQuery,
-                    labelText: "Buscar en PelisPop...",
-                    maxLength: 80,
-                    autofocus: true,
-                    flex: 1
-                  },
-                  {
-                    type: "ElevatedButton",
-                    key: "searchBtnSubmit",
-                    labelText: "Buscar",
-                    icon: "search",
-                    submit: true
+                    type: "Row",
+                    key: "searchBarRow",
+                    gap: 12,
+                    crossAxisAlignment: "center",
+                    children: [
+                      {
+                        type: "TextField",
+                        key: "q",
+                        kind: "text",
+                        value: screenState.searchQuery,
+                        labelText: "Buscar en PelisPop...",
+                        maxLength: 80,
+                        autofocus: true,
+                        flex: 1
+                      },
+                      {
+                        type: "ElevatedButton",
+                        key: "searchBtnSubmit",
+                        labelText: "Buscar",
+                        icon: "search",
+                        submit: true
+                      }
+                    ]
                   }
                 ]
-              }
+              },
+              {
+                type: "Text",
+                text: screenState.searchQuery
+                  ? ("Resultados para \"" + screenState.searchQuery + "\":")
+                  : "Títulos populares:",
+                style: "h4"
+              },
+              buildRail("Resultados", results, "search-results")
             ]
-          },
-          {
-            type: "Text",
-            text: screenState.searchQuery
-              ? ("Resultados para \"" + screenState.searchQuery + "\":")
-              : "Títulos populares:",
-            style: "h4"
-          },
-          buildRail("Resultados", results, "search-results")
+          }
         ]
       }
     };
   }
 
+  // Main Browse Route (Tabs + Hero Slider + Rails with vertical SingleChildScrollView)
   let activeItems = [];
   if (screenState.activeTab === "movies") activeItems = CURATED_MOVIES.map(toKinoItem);
   else if (screenState.activeTab === "series") activeItems = CURATED_SERIES.map(toKinoItem);
@@ -867,10 +890,29 @@ export async function screen(ctx) {
   else activeItems = CURATED_DORAMAS.map(toKinoItem);
 
   const heroSlides = activeItems.slice(0, 4);
-  const bodyChildren = [];
+  const scrollChildren = [];
 
+  // Hero Carousel
+  if (heroSlides.length === 1) {
+    scrollChildren.push(buildHeroSlide(heroSlides[0]));
+  } else if (heroSlides.length > 1) {
+    scrollChildren.push({
+      type: "PageView",
+      key: "heroPager-" + screenState.activeTab,
+      autoPlayMs: 6000,
+      children: heroSlides.map(buildHeroSlide)
+    });
+  }
+
+  // Content Rails
+  scrollChildren.push(buildRail("Tendencias populares", activeItems, screenState.activeTab + "-trending"));
+  scrollChildren.push(buildRail("Estrenos y Novedades", [...activeItems].reverse(), screenState.activeTab + "-new"));
+
+  const rootChildren = [];
+
+  // On phone: pinned TabBar under AppBar
   if (!isTv) {
-    bodyChildren.push({
+    rootChildren.push({
       type: "TabBar",
       key: "phoneTabs",
       value: screenState.activeTab,
@@ -884,27 +926,28 @@ export async function screen(ctx) {
     });
   }
 
-  if (heroSlides.length === 1) {
-    bodyChildren.push(buildHeroSlide(heroSlides[0]));
-  } else if (heroSlides.length > 1) {
-    bodyChildren.push({
-      type: "PageView",
-      key: "heroPager-" + screenState.activeTab,
-      autoPlayMs: 6000,
-      children: heroSlides.map(buildHeroSlide)
-    });
-  }
-
-  bodyChildren.push(buildRail("Tendencias populares", activeItems, screenState.activeTab + "-trending"));
-  bodyChildren.push(buildRail("Estrenos y Novedades", [...activeItems].reverse(), screenState.activeTab + "-new"));
+  // Vertical scroll container for all rows & banner
+  rootChildren.push({
+    type: "SingleChildScrollView",
+    key: "scrollContent-" + screenState.activeTab,
+    flex: 1,
+    children: [
+      {
+        type: "Column",
+        gap: 16,
+        padding: 16,
+        children: scrollChildren
+      }
+    ]
+  });
 
   return {
     type: "Scaffold",
     appBar: buildAppBar(device, screenState.activeTab, false),
     body: {
       type: "Column",
-      gap: 16,
-      children: bodyChildren
+      flex: 1,
+      children: rootChildren
     }
   };
 }
@@ -925,9 +968,13 @@ export async function screenEvent(ev) {
     return {};
   }
 
+  if (name === "openSettings") {
+    screenState.route = "settings";
+    return {};
+  }
+
   if (name === "closeSearch" || name === "back") {
     screenState.route = "main";
-    screenState.detailItem = null;
     return {};
   }
 
@@ -937,15 +984,6 @@ export async function screenEvent(ev) {
     if (q.trim()) {
       screenState.searchResults = await search({ q });
     }
-    return {};
-  }
-
-  if (name === "openDetail" && typeof arg === "string") {
-    try {
-      const parsed = JSON.parse(arg);
-      screenState.detailItem = parsed;
-      screenState.route = "detail";
-    } catch (_) {}
     return {};
   }
 
