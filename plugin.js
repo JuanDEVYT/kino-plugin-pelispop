@@ -1,10 +1,12 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Catálogo de películas, series y anime en español latino con Screen UI integrada.
+// Versión 1.0.2 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
+// y motor de resolución de video HLS rápido en español latino (sin Cloudflare 522/timeout).
 
 export const LOGO_ASPECT = "4:1";
 export const LOGO_DATA = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAABkCAYAAACoy2Z3AAAU3ElEQVR42u2dB3QVVRrHZ4YWFAIIQTAIikY6gQhICQSJlEhJaEZUCNKEKKAoEilBsIGhSEQJokgzKihdSgQhNiyIDStiLwhq3F23sLuuO9/1vZyQ3Klv5k37/86ZczjAe+/OzJ3vP/e7XxEEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACB6Vikvi5SNZPjLlI1s+cuQjN3TkhP4uM/R/4nHFAAAgmGIRKx8Z8pEnH8XyUSIffxg8SkKfzQt9VyyuLAAA+FM04kKriCITYqH3KAr9RhyuOAAAeF84UuWj0EbRUDroN1NxBwAAwHvCkRFyMf3h8EFjyMAdAQAA9wtHss1uqkjcW8m4QwAA4D7hiJGPfBcKR/mDxhiDOwYAAO4QjzT5OOYB8QgfNNY03DkAAHBWPHI9JBzlj1zcQQAAiL5wiA5FV9kRrSXijgIAQHTEI84lEVZWRmohdwQAAGwWDyo5csRH4hE+jri2RErceY0iPT9p/6l/S9s+Oyk98danUsH+18UZDz4mDsyaIDRt1Vb+Bd+swMQ7Hl5T4dyX7Tyo+wsuTbmCd/3EfteM9sw1uD3/0Yjny+5v/iptOvq1tPrld6W8Z3aLY2bOFzr3vlKoUasOrCCIZOXhR/EoKyLuW4lYICCqxkIWFXH4pJuFs2NrQUAgIOovIidPi3NWPSG07tQVFhEYEQ/RZ24rNXeWu97IbRaQsm+d4pXXjYGAQEB0zZdFm/cK9RqisCnQJSCFARCP0o31IApIqWG454mtQo1atSEgEBDNubLzi1+EHgOHwEICNfHIDZB4uC/EN8oCwgzDqoNvedGlBQGJroCw63vwl9/FfiOyYCkBTzzSAige4cMdyYYKAiKOum220Dihua7jwhathdaXdRO69B0gXntzjjRvzSZp73e/qRqG+zftEjy2wQ4B4QuItPXTE7rnCh3N2nUQknr0EvtePUqcsmAZbaZrBWkIbTqjVBA4QzxiPJZhbkfGuvNlT5QEpP+ocRF9b/UaNcUhEyZLu776VekaiAOyxgdKQHwAV0Ce/fDbiL84ITFJynt2j6KIPPn2Z0LVaigTBEoFJD/A4lFaO8u3AhKmXsN4ad3rH3KNwuaPv/eSUYCA2Cgg4e8fnn2L4gvHsIlTYTlBuKquLUZ508nTfzQ59KuXRMTZpbndAhL6DcoT4f5O76uug4BAQM74jQlz7+O+cBQeOQbrCQQ7S7IT3/zr9z8yP/jNKwJS5HsBIaMw9IYpilFZEBAISFmqxlSn7+TNF+HiNu1gQYMtHhl2GuSyeGg14lxTqigJCDMK+378VwXjs+PznyAgEJAKvzNm5nzuvBwyYTKsaLAFpDhaAuKh1Uix7wVERlq6bT/3rbJO3LmmvlD+nJgxNluctXK9tObV91k5lf0nT0tF3/9d2vzRd9Ly3S+Jk+97gJXJqFSpsi8FhM6rU2o/ceysu6TFW4pYORl2HU79W3r+xD/Znx8tPkIZ3qy8TN0G53lBQIS2Xbpz5+W0JStMf+dFrRPFUdPnSPcWbiN3GOWZSC/89B9WWmXj+1/R/BQnzrufouUEUZSiqctCYtceNFelh/a+UjqP9373m/TMB99IK/a9Jk5ZmC+kpA8TKlepGmTxSLXbGCvhgdVIqt8FRLx1aQFXQCis0whNmrWU7t6wRTrw83915xNsO/ajeM3UGbQSckxAGjS+gHv+7ZJ7Gh5MtepnUai1kqtH8TrI10zMfbRQaNQ0wdUCck79BtzxL3h6p9Ehi6lDR0hrDx01dJ22fPKDOGLq7VbPF7FP5sgz/tNlV6RJq196R/88/uykOHrGXKFK1WpBFJBCpwTEA6uRQt8LiPyWzDWgid1S9L5t0xuiEeGo8ABuOvo1vd16WkBaJHWilUZECXpFP/yD9qVcKyDyveaOe9mOA7q/o9FFl0iPHHgzouskrwCE9t0vt0xAwjk/klRJvGXRQ6bHteHNj4WEtu2DJB5x0TDEenDxaiTO1wIy8c6FXAOqx6DXqFVHWr7nZUuym+ktPH3MJE8KSFKPXry9JLOHeMvih10pIFWrxXDv3dJt+3V9Prl/hrTn279Zlg1PqxErBKT/yLH0T9K8xzdaUV9OSEpJDYqAZLtFQFy8Gsn2tYAolMEg37TqB8+qGSutfOENi0tk/E8cNPoGTwnIhS1aW2UUz7jX1+fc6ToBUZiX5LrU/GxK+jDa27D8Oo2aPidiARmYNUHMut2y8k2030dJmEEQkCI3CYhLVyNFfhYQJRHQKq5IRkNNCCiDmRLQ2OYniVGLpE5C134DKZ9AWv/GR4qflY2M0KpjF68IiPTgrhcVz+Wpdz4Xb5i7gG20tuzQWbigeSt2HWiDncrLyONUe8Nmn3GTgHTufSV3XlJQhBoJbdurrdBYgMX8tc+wytA0X6hnDW1g9xpyNe3R0V6ZqohcnnFVRAIyZWE+T9yk7cdPidOXraJxsBU5zeOOvfpSkIi0ZOs+Nbctu/41a5/jZ/GIjZYRNoPLViOxvhQQckFxHgLmY1Z7CNPHTFJ8cMidQXW41LdQJXoo6QHlfsfT736hd6PUUQFRMKjMvXL1lOnkU9f8DlkkpI3vfcn9nuV7XnaTgIg33rOEPy+ZC0jB7RVTnUqeKBr/nIce1zS0tM923bSZFMHGdxt9/Rfh3PObmJ4v5cSD9UAZN/tuzYoMFDiyYt9riucmi4+fBSTDzQListVIhh8FhNwk3N+Z/cgGFdGpLe384mfFN1E9RjNM/UaNaeOR+13yG7rbBYSMH3fstPIyAl2HrZ+e4I5DRyOnqAgI3ffnvizhjjH+wosVxzbqttmK7kqjFX2bt+9IYsG95rmPPWl2vpQPZGCrIN1LeKmSeOfjTyudo6Yr2MMCkucFAXHJaiTPdwLSOKE5bfhxDUK3tEGKD+D4OfdwxyY/RIKZSr4UlcMp7kjGSog562w3Cwit1Cr8tryaMJWvkJI+jP8W+8AjbhAQGgfXSD5afER1hauwP2Qm2oyR2LWHkutITwSUloCQm9W4Ma1cRXpg+wvc85y1cr1fBaTYKwLigtVIsa8EpFHTBEW3CVVYVVpF0IPC8UeTKyqSXiLitbfcYbakumMCIosEz5Axl4zZ/ShOGLCWO9F2ASF3o0Ko95/3SHkVQW2TuXPswV0vRjSkKQvzTYutioCw1r1mkVdh3KoOVPbej33l5ZMr8ZqAOLgaKfGFgNSoVZt887RpqfgQ9Uwfrvj57gMGW+KyKY+80uC5JuitzrUCElunLvdaUHayWcM4+b4HzFQFsE1AWnXsohoksPrld9WqCUiPv/KeqQg/LeSXFe6qVV7taO2dKQkIC1qQn7vI9ojuXsydE2nXXu838YiPpgG2AwdWI/GOC4jhhlKdugqd+/RnET93rXuW/Luq0SwafmTaFOS+YVkQbUJROBW/++Rpyu52pYDIomc6pFUJKmlCTZrKHxquPEsaSl2SeCkl55U2lNLIEmd7BWouo3oNuTZGKtj/ujUutYpzkd23Dj17mxKQxVsij7a8oHkr/pxYv9lvApLsdQFxYDWS7LSA2NqmlCJ+NIw1L5pGWrjxOUsMwoCs8VyDoLGh6egeCCeKjCWSRbm/fNRb2lKodcqgoapj6pM5kl94cfxNlpx0Ytce3O+nsGkTAmKVe5jXyZGJuc8EJNMPAhLl1UimXwWE1WGqfnYN1TFVr1GT+9nrps205JyVCvVddeM01wrIfU9uVwwoMBKN5iEBoT0wqhWl7c7hh/xaVuqjarUYbu5G3rN7zAiIVeMSb1u6kvv9OsOMvSIg2X4SkCitRrL9JiAU6ST2Hn6trjElJCZxjSVVkzXiKlE6Erul8Mt6LHrIrQIi9hqs+CLGopMomi0KQhItAZEWPLVDqF2vvq43cfn/cl2SlSpXseq8qdozJwjkuOH5Qm5YiyrqiunXT+TOp6QevfwkIDl+E5AorEZy/CIglAnOXAnyqkL3mHoMHOJECLWWi8zRREJZHKRVBw5rVmqd/cgG5iKhxksWGtBoCAhFFomzCtZRDoYh487ZQJc2HP7EyvOmfT1eTTXD84WKeVrFpSlXcF+EKMveRwKS61cBsXE1kuslAWG9J7YfP8V6LBTsf13MWb6a9hk0s8SVHrx+I7IcEZDlu19yrYAQDZs0NVK+nQwyiQ6FnNKGtRWuDSsEhCKYWJ8L2fCzMjRj7pjHXFUm93OomoBdG+il5y3Pae69U9nL486XtYeOWjaoFkmdzLhiISAQENsFxI5aWLof1oyx2Y4IiFqimuCSarz148+npkOmz3HNq++zfhLy91glILbUwjIiIPLKq8KYlmx53tI5edO9S7n3TsXNxp0vDxe9atmgzr+4GffZzbo9108CAheWB11YjgrI4HE3OiIg69/4yPUCwgYiShTvTyu+iEraUxkZeUyeFxBehJoVobJlz1spb6ZW3TjHBKRxQnMrqgZjEx2b6P4SEKdcWNSkxwsCUkZIWLXdmSvWUntWsz0lWAVYLwuIl1xY8goQLixjAoIwXg+G8TopIEqb6E5Hl7hOQMqLiWxQWPY/JXJyamep9kZJHTrCswLipU30je9/ZdmgArKJjkRCDyYSOiogSmG8DpdpcLWA8CD/fPKV6ZQnodYXpbQ0h46wWVcKCCdHJkphvJ8Zni8I4zUsIChl4sVSJk4KiFIi4dhZd0FAIhHmtu2phEwknQndKCBi9l2LnEkkfGa30fnCxkUh1lacdxASCUMigmKKQSumGOkb35NvH7e6smrgBSR8HoNG32AmCs21AnLFsGscKWUyfs49ZgTE1lImlL3vN1DOPcDl3M0aBZ6houW/kYREPwhIl74DKJej/MEKH1rtkiG3j0Y2uxsFRDinfgNHiilquIoUiyku2rw34kEFpZhiSEDQUCrIDaXMkDJoqC3l3IU/80yoHwOFZlLVYfIls17isXXquk5AWnfqaubt14xAh/rT1/GcgJAgPvbi27aUcz+rZiy3nDu1ttVoQ6soILT5TtWQI7l/QSnnHhIQtLQNeEtbw1SuUpUb309Nj3R0D1TbX+Emnj1/4p9amdCOCAi1dz34y+/ckhgR1L4Sb11aYDQs1c0CQu4qrrHOfy6iFT2Vm+fXTVv8sJkVa+nn5X8zPSi1hlIWtDtwo4DEullAXLDqKHvEQkBCD+DEOxfyW3cWrDP9nfKDr1gl2IwLy4iBMrkHIi3dtt/q1RgltFU4F/lN24t7IAxq/KTUw9zilras/3jTVm0jERB23zte3se4MQ1gS9uQiBS5UUBcsuoIH0VRvzEuFhByKfHcB2x8k+bnGe0HLl49+TbFnhNNmrXU/DwnmYz1Jdfbn92kgFC7Xe64adUkGznD17VN52Qygtw+LV4VEEG5XTHLc6FaYEZo1q6DoiBRBr+e8WgICAudbn1ZN/0nKEri3NVPKZ1jxO46lwtItpsExGWrjuhnoHtBQOiZGTZxquIDSOUqdLwJUptWejtTdCdMWbBMn9+Z33eCuTOogmy4XLxSGKXZKCxy521482N+t77v/86ijVTavZ5B5z79ea5BvW/qbhYQajHL6/VeKiIzHnxM08UjX0fWVVMWZ37m/td/Eeo3amyFgIRfAlj3T63ckCaXtJBWPH9IcQ5PX7ZK8DPySca5RUBctuooe8RBQCo+h9L9m3apZVHTkl68ZuoMVtFVfnMUmrZsQ2/mFK5KDZeUjAH7/KqDb2n1ti4diEL4a8XvPHDYUgEhklJSVX9z66cnSMhYFnJitxSWA3FB81aUnU6Z/eKYmfOVNprDpeD1+M9dLSDExW3a8fYHygquNG/NJlrV0TVlLyBtu3QXL8+4iq4fXUfVhmjy/9M9cbmJhCdPK96/aUtWsO+nCDsaV4eevcX0MZPoRYnnSjvj+vtx74MjIoVOCohLVx3ho9CRm+J+AaGN5Dpqxs907SvaiDZSlVZeWag9yLYKiIqLxpJOkT3Th+sag9sFhEhJH8ZL/Iv4GhmscqsUdCEt2brPsjksCyJVbhCCgHzCqU4JiItXHeEjFQKisR+yYt9rlj14VNSuXkPDGf/UtdApAWG/rxBYYPo6kGvHwCazJwSEkFddZFwtuka/k3gbnitKUXu16sYpudqMFsKkelhCkLA7qdBjqw5nkge9KCBs8lSuQvHvvLBWQwbz1qUFFN9vegyzCtY5JSClxnHnFz9HbIA2f/y90H3AYENG0SsCEt43iHDlyq5Rh569Tfle1cK+a9erT5UVzFeOPvyJZaVaPCYgGdESEA+sOpzJ/fCqgJQahmYtyY9Nce9G3iJZn+3WnbpaMobEbikkJNJT73xefo/FdgEJGSCqXUUGzoxRZHXFTGT1e0pA2IBFSeyTOVKrmCR3T2LkrbO08mJMC0h4bAOzJpArVfe4th8/xWqWaSQx+l1EiuwUEI+sOpwL3fULsXXqktBRdA1thtNDT8acNirZn9ceOsoyzgePu9F3BebKrIiopAYZO6pKS+csbf7oO7ZZTK2Gd3z+E1WNZa1jx82+W+jYq28kCYiehopJjp4xl14kqNaa9NyXJbSnxVrsykZcWrbjAK1wWX6GBddId+IpRdB17tOfbeKvfOENWl3SHo5U9MM/2L2U/068OW85q5ZgUSVfrwuIbSXePbTqiH7pdgBA9BY/kVYuAKoiku8hI2/XkY+ZAAAEBBgXkBj5OBZg8aBzj8FMAAACAsyJSFqABSQNMwAACAiITERyAygeubjzAEBAgDUiUhgg8SjEHQcAAgKsExAxml0LnUwYpHPFHQcAAgKsFREqtnjEx+JxxJFiiQAACEhARCTepyJC5xSPOwwABARXxv6VSLHP3FZYeQAAQJRERPTJxnoh9jwAAMAZIclFqC4AAACzIpLmsYz1Y0gSBAAA94hIjEdqZ+WjPAkAALhTSJLtLAUfSUl2VNUFAABvCEmGSyK1ih1tBgUAAMC0kKQ6FK1V6FgPcwAAAJYKCeWOZNvs3ioK/QZyOgAAwKdiEhtyceWFXEwlJsSiJPTZvNB3xeLKAgBAMEUlPrQBnxlaReSEckxyQ3/ODv1bMkqOAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAuJr/Aw9CZQbUZIGcAAAAAElFTkSuQmCC";
 
-// Curated live TMDB metadata (100% verified HTTP 200 OK images)
+const BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
 const CURATED_MOVIES = [
   {
     id: "pp-m-533535",
@@ -309,14 +311,10 @@ async function fetchTmdbOr(path, params, fallbackList) {
   return fallbackList.map(toKinoItem);
 }
 
-const screenState = {
-  activeTab: "movies",
-  route: "main", // "main" | "search" | "settings"
-  searchQuery: "",
-  searchResults: []
-};
+// -----------------------------------------------------------------------------
+// Capabilities Principales de Kino
+// -----------------------------------------------------------------------------
 
-// Capabilities
 export async function home() {
   await null;
   const [trendingMovies, popularSeries, animList, doramaList] = await Promise.all([
@@ -459,15 +457,157 @@ export async function episodes(ref) {
   };
 }
 
+// -----------------------------------------------------------------------------
+// Motor de Resolución de Video HLS
+// -----------------------------------------------------------------------------
+
+function decodeNupload(html) {
+  try {
+    const mFunc = html.match(/parseInt\(atob\(value\)\.replace\([^)]*\)\)\s*-\s*(\d+)/);
+    const mArr = html.match(/var\s+([A-Za-z0-9_]+)\s*=\s*(\[\"[^\"]+\"(?:,\"[^\"]+\")*\])/);
+    if (!mFunc || !mArr) return null;
+
+    const offset = parseInt(mFunc[1], 10);
+    const arr = JSON.parse(mArr[2]);
+    let baseUrl = "";
+    for (const item of arr) {
+      const raw = atob(item);
+      const code = parseInt(raw.replace(/\D/g, ""), 10) - offset;
+      baseUrl += String.fromCharCode(code);
+    }
+    const mSesz = html.match(/var\s+sesz\s*=\s*["']([^"']+)["']/);
+    const sesz = mSesz ? mSesz[1] : "";
+    return sesz ? (baseUrl + "?s=" + sesz) : baseUrl;
+  } catch (_) {
+    return null;
+  }
+}
+
+function cleanTitle(raw) {
+  return String(raw || "").replace(/\s*\(\d{4}\).*$/, "").replace(/[:–—|].*$/, "").trim();
+}
+
+async function resolveDirectHls(title, season, episode) {
+  if (typeof kino === "undefined" || typeof kino.fetch !== "function") return null;
+
+  const q = cleanTitle(title);
+  if (!q) return null;
+
+  try {
+    const searchUrl = "https://repelisplus.my/buscar/" + encodeURIComponent(q);
+    const sRes = await kino.fetch(searchUrl, {
+      headers: { "User-Agent": BROWSER_UA }
+    });
+    if (!sRes.ok) return null;
+
+    const sHtml = await sRes.text();
+    const matches = Array.from(sHtml.matchAll(/<a[^>]+href=["'](https:\/\/repelisplus\.my\/ver\/[^"']+)["']/gi));
+    if (!matches || matches.length === 0) return null;
+
+    const targetUrl = matches[0][1];
+    const mRes = await kino.fetch(targetUrl, {
+      headers: { "User-Agent": BROWSER_UA }
+    });
+    if (!mRes.ok) return null;
+
+    const mHtml = await mRes.text();
+    const mJaljz = mHtml.match(/var\s+jaljz\s*=\s*(\{[\s\S]*?\});/);
+    if (!mJaljz) return null;
+
+    const jaljz = JSON.parse(mJaljz[1]);
+    const keys = [];
+
+    if (season && episode && jaljz.pos && typeof jaljz.pos === "object") {
+      const sKey = String(season);
+      const eKey = String(episode);
+      const sObj = jaljz.pos[sKey] || jaljz.pos["1"];
+      if (sObj) {
+        const eObj = sObj[eKey] || sObj["1"];
+        if (eObj) {
+          for (const langKey of Object.keys(eObj)) {
+            const langGroup = eObj[langKey];
+            if (langGroup && langGroup.pos) {
+              for (const pk of Object.keys(langGroup.pos)) {
+                const item = langGroup.pos[pk];
+                if (item && item.key) {
+                  keys.push({ key: item.key, lang: langGroup.id || "Latino" });
+                }
+              }
+            }
+          }
+        }
+      }
+    } else {
+      for (const groupKey of ["0", "1", "2"]) {
+        const group = jaljz[groupKey];
+        if (!group || !group.pos) continue;
+        for (const posKey of Object.keys(group.pos)) {
+          const item = group.pos[posKey];
+          if (item && item.key) {
+            keys.push({ key: item.key, lang: group.id || "Latino" });
+          }
+        }
+      }
+    }
+
+    for (const k of keys.slice(0, 4)) {
+      try {
+        const buUrl = "https://watchfun.top/bu/?key=" + encodeURIComponent(k.key);
+        const buRes = await kino.fetch(buUrl, {
+          headers: { "User-Agent": BROWSER_UA, "Referer": targetUrl }
+        });
+        if (!buRes.ok) continue;
+
+        const buHtml = await buRes.text();
+        const iframeMatch = buHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+        const iframeSrc = iframeMatch ? iframeMatch[1] : null;
+        if (!iframeSrc) continue;
+
+        const nuRes = await kino.fetch(iframeSrc, {
+          headers: { "User-Agent": BROWSER_UA, "Referer": "https://watchfun.top/" }
+        });
+        if (!nuRes.ok) continue;
+
+        const nuHtml = await nuRes.text();
+        const m3u8Url = decodeNupload(nuHtml);
+        if (m3u8Url && m3u8Url.startsWith("http")) {
+          return {
+            url: m3u8Url,
+            headers: {
+              "User-Agent": BROWSER_UA,
+              "Referer": "https://nupload.my/",
+              "Origin": "https://nupload.my"
+            }
+          };
+        }
+      } catch (_) {}
+    }
+  } catch (_) {}
+
+  return null;
+}
+
 export async function resolve(ref, options) {
   await null;
   let parsed = null;
   try { parsed = JSON.parse(ref); } catch (_) { parsed = {}; }
 
-  const imdb = parsed.imdb || (parsed.tmdb ? ("tt" + parsed.tmdb) : "tt6263850");
+  const title = parsed.title || "";
   const season = parsed.season;
   const number = parsed.number;
 
+  // Paso 1: Intentar resolución directa ultrarrápida HLS
+  if (title) {
+    try {
+      const direct = await resolveDirectHls(title, season, number);
+      if (direct && direct.url) {
+        return direct;
+      }
+    } catch (_) {}
+  }
+
+  // Paso 2: Fallback secundario mediante captura browser si está disponible
+  const imdb = parsed.imdb || (parsed.tmdb ? ("tt" + parsed.tmdb) : "tt6263850");
   let embedUrl = "";
   if (season && number) {
     embedUrl = "https://embed69.org/f/" + imdb + "-" + season + "x" + number + "/";
@@ -475,18 +615,16 @@ export async function resolve(ref, options) {
     embedUrl = "https://embed69.org/f/" + imdb + "/";
   }
 
-  const browserUa = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
   const defaultHeaders = {
     "Referer": "https://pelispop.mov/",
     "Origin": "https://pelispop.mov/",
-    "User-Agent": browserUa
+    "User-Agent": BROWSER_UA
   };
 
-  // 1. Try hidden WebView capture with kino.browser.capture
   if (typeof kino !== "undefined" && kino.browser && typeof kino.browser.capture === "function") {
     try {
       const captured = await kino.browser.capture(embedUrl, {
-        timeoutMs: 15000,
+        timeoutMs: 8000,
         autoplay: true,
         headers: defaultHeaders
       });
@@ -496,52 +634,18 @@ export async function resolve(ref, options) {
         if (videoMedia && videoMedia.url) {
           return {
             url: videoMedia.url,
-            headers: Object.assign({}, defaultHeaders, videoMedia.headers || {}),
-            alternatives: captured.media.slice(1).map((m, idx) => ({
-              label: "Opción " + (idx + 2),
-              url: m.url,
-              headers: Object.assign({}, defaultHeaders, m.headers || {})
-            }))
+            headers: Object.assign({}, defaultHeaders, videoMedia.headers || {})
           };
         }
       }
     } catch (_) {}
   }
 
-  // 2. Try direct HTTP scraping of embed page for direct m3u8 or mp4
-  if (typeof kino !== "undefined" && typeof kino.fetch === "function") {
-    try {
-      const resp = await kino.fetch(embedUrl, { headers: defaultHeaders });
-      if (resp && resp.ok) {
-        const html = await resp.text();
-        const m3u8Match = html.match(/(?:file|source|src|url)\s*[:=]\s*["'](https?:\/\/[^"']+\.m3u8[^"']*)["']/i);
-        const mp4Match = html.match(/(?:file|source|src|url)\s*[:=]\s*["'](https?:\/\/[^"']+\.mp4[^"']*)["']/i);
-        const directStream = (m3u8Match && m3u8Match[1]) || (mp4Match && mp4Match[1]);
-        if (directStream) {
-          return {
-            url: directStream,
-            headers: defaultHeaders
-          };
-        }
-      }
-    } catch (_) {}
-  }
-
-  // 3. Fallback: return embed URL with explicit browser stream headers
   return {
     url: embedUrl,
     headers: defaultHeaders,
     alternatives: [
-      {
-        label: "Embed69",
-        url: embedUrl,
-        headers: defaultHeaders
-      },
-      {
-        label: "PelisPop Web",
-        url: "https://pelispop.mov/",
-        headers: defaultHeaders
-      }
+      { label: "Embed69", url: embedUrl, headers: defaultHeaders }
     ]
   };
 }
@@ -616,7 +720,7 @@ export async function action(key) {
 
 export async function settingsStatus() {
   await null;
-  return { status: "PelisPop 1.0.1 listo y sincronizado" };
+  return { status: "PelisPop 1.0.2 listo y sincronizado" };
 }
 
 export async function validateSettings(values) {
@@ -625,10 +729,10 @@ export async function validateSettings(values) {
 }
 
 // -----------------------------------------------------------------------------
-// Screen UI (apiVersion 14+)
+// Screen UI Declarativa con gestión de estado Kino (ctx.state)
 // -----------------------------------------------------------------------------
 
-function buildAppBar(device, activeTab, isSearch) {
+function buildAppBar(device, activeTab, isSearch, isSettings) {
   const isTv = device === "tv";
   const tabsList = [
     { value: "movies", label: "Películas" },
@@ -648,7 +752,7 @@ function buildAppBar(device, activeTab, isSearch) {
     fallback: { type: "Text", text: "PelisPop", style: "h4" }
   };
 
-  const titleNode = isTv
+  const titleNode = isTv && !isSearch && !isSettings
     ? {
         type: "Row",
         key: "barRow",
@@ -665,39 +769,73 @@ function buildAppBar(device, activeTab, isSearch) {
           }
         ]
       }
-    : logoNode;
+    : isSettings
+      ? { type: "Text", text: "Ajustes de PelisPop", style: "h4" }
+      : logoNode;
+
+  const leadingBtn = isSettings
+    ? {
+        type: "IconButton",
+        key: "settingsBackBtn",
+        icon: "arrow_back",
+        labelText: "Volver",
+        tooltip: "Volver",
+        onPressed: "back"
+      }
+    : isSearch
+      ? {
+          type: "IconButton",
+          key: "searchBackBtn",
+          icon: "arrow_back",
+          labelText: "Volver",
+          tooltip: "Volver",
+          onPressed: "back"
+        }
+      : {
+          type: "IconButton",
+          key: "closeBtn",
+          icon: "close",
+          labelText: "Cerrar",
+          tooltip: "Cerrar",
+          onPressed: { go: { close: true } }
+        };
+
+  const actions = [];
+  if (!isSettings) {
+    actions.push({
+      type: "IconButton",
+      key: "searchBtn",
+      icon: isSearch ? "close" : "search",
+      labelText: isSearch ? "Cerrar búsqueda" : "Buscar",
+      tooltip: isSearch ? "Cerrar búsqueda" : "Buscar",
+      onPressed: isSearch ? "back" : "openSearch"
+    });
+    actions.push({
+      type: "IconButton",
+      key: "settingsBtn",
+      icon: "settings",
+      labelText: "Ajustes",
+      tooltip: "Ajustes",
+      onPressed: { event: "go", arg: "settings" }
+    });
+  } else {
+    actions.push({
+      type: "IconButton",
+      key: "closeSettingsBtn",
+      icon: "close",
+      labelText: "Cerrar",
+      tooltip: "Cerrar",
+      onPressed: { go: { close: true } }
+    });
+  }
 
   return {
     type: "AppBar",
     mergeWithKinoBar: true,
     dense: true,
-    leading: {
-      type: "IconButton",
-      key: "closeBtn",
-      icon: "close",
-      labelText: "Cerrar",
-      tooltip: "Cerrar",
-      onPressed: { go: { close: true } }
-    },
+    leading: leadingBtn,
     title: titleNode,
-    actions: [
-      {
-        type: "IconButton",
-        key: "searchBtn",
-        icon: isSearch ? "close" : "search",
-        labelText: isSearch ? "Cerrar búsqueda" : "Buscar",
-        tooltip: isSearch ? "Cerrar búsqueda" : "Buscar",
-        onPressed: isSearch ? "closeSearch" : "openSearch"
-      },
-      {
-        type: "IconButton",
-        key: "settingsBtn",
-        icon: "settings",
-        labelText: "Ajustes",
-        tooltip: "Ajustes",
-        onPressed: "openSettings"
-      }
-    ]
+    actions
   };
 }
 
@@ -768,36 +906,15 @@ export async function screen(ctx) {
   await null;
   const device = (ctx && ctx.device) || "phone";
   const isTv = device === "tv";
-  const routeName = (ctx && ctx.route && ctx.route.name) || screenState.route;
+  const routeName = (ctx && ctx.route && ctx.route.name) || "main";
+  const st = (ctx && ctx.state && typeof ctx.state === "object") ? ctx.state : {};
+  const activeTab = st.activeTab || "movies";
 
-  // Settings Route
+  // Vista de Ajustes
   if (routeName === "settings") {
     return {
       type: "Scaffold",
-      appBar: {
-        type: "AppBar",
-        mergeWithKinoBar: true,
-        dense: true,
-        leading: {
-          type: "IconButton",
-          key: "settingsBackBtn",
-          icon: "arrowBack",
-          labelText: "Volver",
-          tooltip: "Volver",
-          onPressed: "back"
-        },
-        title: { type: "Text", text: "Ajustes de PelisPop", style: "h4" },
-        actions: [
-          {
-            type: "IconButton",
-            key: "closeSettingsBtn",
-            icon: "close",
-            labelText: "Cerrar",
-            tooltip: "Cerrar",
-            onPressed: { go: { close: true } }
-          }
-        ]
-      },
+      appBar: buildAppBar(device, activeTab, false, true),
       body: {
         type: "SingleChildScrollView",
         key: "settingsScroll",
@@ -816,15 +933,16 @@ export async function screen(ctx) {
     };
   }
 
-  // Search Route
+  // Vista de Búsqueda
   if (routeName === "search") {
-    const results = screenState.searchResults.length > 0
-      ? screenState.searchResults
+    const query = typeof st.sq === "string" ? st.sq : "";
+    const results = Array.isArray(st.searchResults) && st.searchResults.length > 0
+      ? st.searchResults
       : CURATED_MOVIES.map(toKinoItem);
 
     return {
       type: "Scaffold",
-      appBar: buildAppBar(device, screenState.activeTab, true),
+      appBar: buildAppBar(device, activeTab, true, false),
       body: {
         type: "SingleChildScrollView",
         key: "searchScroll",
@@ -838,7 +956,7 @@ export async function screen(ctx) {
               {
                 type: "Form",
                 key: "searchForm",
-                onSubmitted: "doSearch",
+                onSubmitted: "search",
                 children: [
                   {
                     type: "Row",
@@ -850,7 +968,7 @@ export async function screen(ctx) {
                         type: "TextField",
                         key: "q",
                         kind: "text",
-                        value: screenState.searchQuery,
+                        value: query,
                         labelText: "Buscar en PelisPop...",
                         maxLength: 80,
                         autofocus: true,
@@ -869,9 +987,7 @@ export async function screen(ctx) {
               },
               {
                 type: "Text",
-                text: screenState.searchQuery
-                  ? ("Resultados para \"" + screenState.searchQuery + "\":")
-                  : "Títulos populares:",
+                text: query ? ("Resultados para \"" + query + "\":") : "Títulos populares:",
                 style: "h4"
               },
               buildRail("Resultados", results, "search-results")
@@ -882,40 +998,38 @@ export async function screen(ctx) {
     };
   }
 
-  // Main Browse Route (Tabs + Hero Slider + Rails with vertical SingleChildScrollView)
+  // Vista Principal (Pestañas + Carrusel Hero + Rieles de contenido con desplazamiento vertical)
   let activeItems = [];
-  if (screenState.activeTab === "movies") activeItems = CURATED_MOVIES.map(toKinoItem);
-  else if (screenState.activeTab === "series") activeItems = CURATED_SERIES.map(toKinoItem);
-  else if (screenState.activeTab === "anime") activeItems = CURATED_ANIME.map(toKinoItem);
+  if (activeTab === "movies") activeItems = CURATED_MOVIES.map(toKinoItem);
+  else if (activeTab === "series") activeItems = CURATED_SERIES.map(toKinoItem);
+  else if (activeTab === "anime") activeItems = CURATED_ANIME.map(toKinoItem);
   else activeItems = CURATED_DORAMAS.map(toKinoItem);
 
   const heroSlides = activeItems.slice(0, 4);
   const scrollChildren = [];
 
-  // Hero Carousel
   if (heroSlides.length === 1) {
     scrollChildren.push(buildHeroSlide(heroSlides[0]));
   } else if (heroSlides.length > 1) {
     scrollChildren.push({
       type: "PageView",
-      key: "heroPager-" + screenState.activeTab,
+      key: "heroPager-" + activeTab,
       autoPlayMs: 6000,
       children: heroSlides.map(buildHeroSlide)
     });
   }
 
-  // Content Rails
-  scrollChildren.push(buildRail("Tendencias populares", activeItems, screenState.activeTab + "-trending"));
-  scrollChildren.push(buildRail("Estrenos y Novedades", [...activeItems].reverse(), screenState.activeTab + "-new"));
+  scrollChildren.push(buildRail("Tendencias populares", activeItems, activeTab + "-trending"));
+  scrollChildren.push(buildRail("Estrenos y Novedades", [...activeItems].reverse(), activeTab + "-new"));
 
   const rootChildren = [];
 
-  // On phone: pinned TabBar under AppBar
+  // Pestañas fijas en teléfonos móviles
   if (!isTv) {
     rootChildren.push({
       type: "TabBar",
       key: "phoneTabs",
-      value: screenState.activeTab,
+      value: activeTab,
       onChanged: "tab",
       tabs: [
         { value: "movies", label: "Películas" },
@@ -926,10 +1040,10 @@ export async function screen(ctx) {
     });
   }
 
-  // Vertical scroll container for all rows & banner
+  // Contenedor de scroll vertical
   rootChildren.push({
     type: "SingleChildScrollView",
-    key: "scrollContent-" + screenState.activeTab,
+    key: "scrollContent-" + activeTab,
     flex: 1,
     children: [
       {
@@ -943,7 +1057,7 @@ export async function screen(ctx) {
 
   return {
     type: "Scaffold",
-    appBar: buildAppBar(device, screenState.activeTab, false),
+    appBar: buildAppBar(device, activeTab, false, false),
     body: {
       type: "Column",
       flex: 1,
@@ -956,35 +1070,47 @@ export async function screenEvent(ev) {
   await null;
   const name = ev && typeof ev.name === "string" ? ev.name : "";
   const arg = ev && ev.arg;
+  const val = ev && ev.value;
+  const st = (ev && ev.state && typeof ev.state === "object") ? ev.state : {};
 
-  if (name === "tab" && typeof arg === "string") {
-    screenState.activeTab = arg;
-    screenState.route = "main";
-    return {};
+  if (name === "tab") {
+    const tab = (typeof val === "string" && val) || (typeof arg === "string" && arg) || "movies";
+    return {
+      state: Object.assign({}, st, { activeTab: tab })
+    };
   }
 
   if (name === "openSearch") {
-    screenState.route = "search";
-    return {};
+    return {
+      route: { push: "search" },
+      state: Object.assign({}, st, { sq: "", searchResults: [] })
+    };
   }
 
-  if (name === "openSettings") {
-    screenState.route = "settings";
-    return {};
+  if (name === "go" && arg === "settings") {
+    return {
+      route: { push: "settings" },
+      state: Object.assign({}, st, { fromBrowse: true })
+    };
   }
 
-  if (name === "closeSearch" || name === "back") {
-    screenState.route = "main";
-    return {};
+  if (name === "back") {
+    return {
+      route: { pop: true },
+      state: Object.assign({}, st, { sq: null, searchResults: [] })
+    };
   }
 
-  if (name === "doSearch" || name === "search") {
-    const q = (ev.values && ev.values.q) || (typeof arg === "string" ? arg : "");
-    screenState.searchQuery = q;
-    if (q.trim()) {
-      screenState.searchResults = await search({ q });
+  if (name === "search") {
+    const q = (ev.values && ev.values.q) || (typeof val === "string" ? val : (typeof arg === "string" ? arg : ""));
+    const query = q ? q.trim() : "";
+    let results = [];
+    if (query) {
+      results = await search({ q: query });
     }
-    return {};
+    return {
+      state: Object.assign({}, st, { sq: query, searchResults: results })
+    };
   }
 
   return {};
