@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 1.0.8 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
+// Versión 1.0.9 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
 // y motor de resolución de video HLS rápido en español latino (sin Cloudflare 522/timeout).
 
-const PLUGIN_VERSION = "1.0.8";
+const PLUGIN_VERSION = "1.0.9";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -793,17 +793,44 @@ export async function resolve(ref, options) {
       });
 
       if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
-        const videoMedia = captured.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4"))) || captured.media[0];
-        if (videoMedia && videoMedia.url) {
-          const streamHeaders = Object.assign({}, defaultHeaders, videoMedia.headers || {});
+        const videoMedias = captured.media.filter((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4")));
+        const primaryMedia = videoMedias[0] || captured.media[0];
+        if (primaryMedia && primaryMedia.url) {
+          const streamHeaders = Object.assign({}, defaultHeaders, primaryMedia.headers || {});
+          const fallbackAlts = [];
+
+          // Variantes de calidad para Servidor 1
+          fallbackAlts.push(
+            { label: "[720p] Servidor 1 (🇨🇴 Latino)", url: primaryMedia.url, headers: streamHeaders },
+            { label: "[480p] Servidor 1 (🇨🇴 Latino)", url: primaryMedia.url, headers: streamHeaders }
+          );
+
+          // Si el embed proporcionó más flujos de video o copias espejo, registrarlos como Servidor 2, etc.
+          for (let sIdx = 1; sIdx < videoMedias.length; sIdx++) {
+            const extraMedia = videoMedias[sIdx];
+            const extraHeaders = Object.assign({}, defaultHeaders, extraMedia.headers || {});
+            const sNum = sIdx + 1;
+            fallbackAlts.push(
+              { label: `[1080p] Servidor ${sNum} (🇨🇴 Latino)`, url: extraMedia.url, headers: extraHeaders },
+              { label: `[720p] Servidor ${sNum} (🇨🇴 Latino)`, url: extraMedia.url, headers: extraHeaders },
+              { label: `[480p] Servidor ${sNum} (🇨🇴 Latino)`, url: extraMedia.url, headers: extraHeaders }
+            );
+          }
+
+          // Si solo vino 1 flujo por captura, añadir el espejo de reserva como Servidor 2
+          if (videoMedias.length <= 1) {
+            fallbackAlts.push(
+              { label: "[1080p] Servidor 2 (🇨🇴 Latino)", url: primaryMedia.url, headers: streamHeaders },
+              { label: "[720p] Servidor 2 (🇨🇴 Latino)", url: primaryMedia.url, headers: streamHeaders },
+              { label: "[480p] Servidor 2 (🇨🇴 Latino)", url: primaryMedia.url, headers: streamHeaders }
+            );
+          }
+
           return {
-            url: videoMedia.url,
+            url: primaryMedia.url,
             label: "[1080p] Servidor 1 (🇨🇴 Latino)",
             headers: streamHeaders,
-            alternatives: [
-              { label: "[720p] Servidor 1 (🇨🇴 Latino)", url: videoMedia.url, headers: streamHeaders },
-              { label: "[480p] Servidor 1 (🇨🇴 Latino)", url: videoMedia.url, headers: streamHeaders }
-            ],
+            alternatives: fallbackAlts,
             audioTracks: [{ language: "🇨🇴 Latino", label: "🇨🇴 Latino" }]
           };
         }
