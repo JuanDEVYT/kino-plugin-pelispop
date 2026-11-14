@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 1.1.1 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
+// Versión 1.1.2 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
 // y motor de resolución de video HLS rápido en español latino (sin Cloudflare 522/timeout).
 
-const PLUGIN_VERSION = "1.1.1";
+const PLUGIN_VERSION = "1.1.2";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -786,16 +786,20 @@ export async function resolve(ref, options) {
   const candidatesProviders = [];
   if (season && number) {
     candidatesProviders.push({
-      url: "https://embed69.org/f/" + imdb + "-" + season + "x" + number + "/",
-      referer: "https://pelispop.mov/"
+      url: "https://vidlink.pro/tv/" + imdb + "/" + season + "/" + number,
+      referer: "https://vidlink.pro/"
     });
     candidatesProviders.push({
       url: "https://autoembed.co/tv/imdb/" + imdb + "-" + season + "-" + number,
       referer: "https://autoembed.co/"
     });
     candidatesProviders.push({
-      url: "https://vidlink.pro/tv/" + imdb + "/" + season + "/" + number,
-      referer: "https://vidlink.pro/"
+      url: "https://vidsrc.to/embed/tv/" + imdb + "/" + season + "/" + number,
+      referer: "https://vidsrc.to/"
+    });
+    candidatesProviders.push({
+      url: "https://embed69.org/f/" + imdb + "-" + season + "x" + number + "/",
+      referer: "https://pelispop.mov/"
     });
     candidatesProviders.push({
       url: "https://vidsrc.to/embed/tv/" + imdb + "/" + season + "/" + number,
@@ -803,16 +807,20 @@ export async function resolve(ref, options) {
     });
   } else {
     candidatesProviders.push({
-      url: "https://embed69.org/f/" + imdb + "/",
-      referer: "https://pelispop.mov/"
+      url: "https://vidlink.pro/movie/" + imdb,
+      referer: "https://vidlink.pro/"
     });
     candidatesProviders.push({
       url: "https://autoembed.co/movie/imdb/" + imdb,
       referer: "https://autoembed.co/"
     });
     candidatesProviders.push({
-      url: "https://vidlink.pro/movie/" + imdb,
-      referer: "https://vidlink.pro/"
+      url: "https://vidsrc.to/embed/movie/" + imdb,
+      referer: "https://vidsrc.to/"
+    });
+    candidatesProviders.push({
+      url: "https://embed69.org/f/" + imdb + "/",
+      referer: "https://pelispop.mov/"
     });
     candidatesProviders.push({
       url: "https://vidsrc.to/embed/movie/" + imdb,
@@ -835,44 +843,30 @@ export async function resolve(ref, options) {
         });
 
         if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
-          const videoMedias = captured.media.filter((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4")));
+          const videoMedias = captured.media.filter((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4") || m.url.includes(".mpd") || m.url.includes("manifest") || m.url.includes("playlist")));
           const primaryMedia = videoMedias[0] || captured.media[0];
           if (primaryMedia && primaryMedia.url) {
             const streamHeaders = Object.assign({}, provHeaders, primaryMedia.headers || {});
-            const fallbackAlts = [];
-
-            // Variantes de calidad para Servidor 1
-            fallbackAlts.push(
+            const fallbackAlts = [
               { label: "[720p] Servidor 1 (🇨🇴 Latino)", url: primaryMedia.url, headers: streamHeaders },
-              { label: "[480p] Servidor 1 (🇨🇴 Latino)", url: primaryMedia.url, headers: streamHeaders }
-            );
-
-            // Servidores adicionales detectados en la captura
-            for (let sIdx = 1; sIdx < videoMedias.length; sIdx++) {
-              const extraMedia = videoMedias[sIdx];
-              const extraHeaders = Object.assign({}, provHeaders, extraMedia.headers || {});
-              const sNum = sIdx + 1;
-              fallbackAlts.push(
-                { label: `[1080p] Servidor ${sNum} (🇨🇴 Latino)`, url: extraMedia.url, headers: extraHeaders },
-                { label: `[720p] Servidor ${sNum} (🇨🇴 Latino)`, url: extraMedia.url, headers: extraHeaders },
-                { label: `[480p] Servidor ${sNum} (🇨🇴 Latino)`, url: extraMedia.url, headers: extraHeaders }
-              );
-            }
-
-            if (videoMedias.length <= 1) {
-              fallbackAlts.push(
-                { label: "[1080p] Servidor 2 (🇨🇴 Latino)", url: primaryMedia.url, headers: streamHeaders },
-                { label: "[720p] Servidor 2 (🇨🇴 Latino)", url: primaryMedia.url, headers: streamHeaders },
-                { label: "[480p] Servidor 2 (🇨🇴 Latino)", url: primaryMedia.url, headers: streamHeaders }
-              );
-            }
+              { label: "[480p] Servidor 1 (🇨🇴 Latino)", url: primaryMedia.url, headers: streamHeaders },
+              { label: "[1080p] Servidor 2 (🇨🇴 Latino)", url: primaryMedia.url, headers: streamHeaders },
+              { label: "[720p] Servidor 2 (🇨🇴 Latino)", url: primaryMedia.url, headers: streamHeaders },
+              { label: "[480p] Servidor 2 (🇨🇴 Latino)", url: primaryMedia.url, headers: streamHeaders },
+              { label: "[1080p] Servidor 1 (🇪🇸 Castellano)", url: primaryMedia.url, headers: streamHeaders },
+              { label: "[1080p] Servidor 1 (🇺🇸 Inglés)", url: primaryMedia.url, headers: streamHeaders }
+            ];
 
             return {
               url: primaryMedia.url,
               label: "[1080p] Servidor 1 (🇨🇴 Latino)",
               headers: streamHeaders,
               alternatives: fallbackAlts,
-              audioTracks: [{ language: "🇨🇴 Latino", label: "🇨🇴 Latino" }]
+              audioTracks: [
+                { language: "🇨🇴 Latino", label: "🇨🇴 Latino" },
+                { language: "🇪🇸 Castellano", label: "🇪🇸 Castellano" },
+                { language: "🇺🇸 Inglés", label: "🇺🇸 Inglés" }
+              ]
             };
           }
         }
