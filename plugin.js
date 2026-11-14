@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 1.2.4 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
-// y motor de resolución de video HLS rápido en español latino (sin Cloudflare 522/timeout).
+// Versión 2.0.0 - Reescritura completa del motor de resolución.
+// Cadena: repelisplus.my → watchfun.top → nupload.my → voe.sx (browser.capture directo).
 
-const PLUGIN_VERSION = "1.2.4";
+const PLUGIN_VERSION = "2.0.0";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -465,91 +465,43 @@ export async function episodes(ref) {
 }
 
 // -----------------------------------------------------------------------------
-// Motor de Resolución de Video HLS
+
 // -----------------------------------------------------------------------------
-
-function decodeNupload(html) {
-  try {
-    const mFunc = html.match(/parseInt\(atob\(value\)\.replace\([^)]*\)\)\s*-\s*(\d+)/);
-    const mArr = html.match(/var\s+([A-Za-z0-9_]+)\s*=\s*(\[\"[^\"]+\"(?:,\"[^\"]+\")*\])/);
-    if (!mFunc || !mArr) return null;
-
-    const offset = parseInt(mFunc[1], 10);
-    const arr = JSON.parse(mArr[2]);
-    let baseUrl = "";
-    for (const item of arr) {
-      const raw = atob(item);
-      const code = parseInt(raw.replace(/\D/g, ""), 10) - offset;
-      baseUrl += String.fromCharCode(code);
-    }
-    const mSesz = html.match(/var\s+sesz\s*=\s*["']([^"']+)["']/);
-    const sesz = mSesz ? mSesz[1] : "";
-    return sesz ? (baseUrl + "?s=" + sesz) : baseUrl;
-  } catch (_) {
-    return null;
-  }
-}
+// Motor de Resolución de Video v2.0.0
+// Cadena: repelisplus.my → watchfun.top/bu/?key= → nupload.my → voe.sx
+// kino.browser.capture se ejecuta DIRECTAMENTE sobre voe.sx (no sobre nupload)
+// porque nupload es solo un wrapper con iframe anidado que capture no puede ver.
+// Máximo 2 capturas secuenciales para respetar el timeout de 75s de resolve().
+// -----------------------------------------------------------------------------
 
 function getTitleCandidates(raw) {
   let str = String(raw || "").trim();
   if (!str) return [];
-
-  // Limpiar etiquetas de episodio: "Breaking Bad - T1:E1 Piloto", "Serie 1x01", etc.
   str = str.replace(/\s*-\s*T\d+[:E\s].*$/i, "");
   str = str.replace(/\s*\b\d+x\d+\b.*$/i, "");
   str = str.replace(/\s*Temporada\s*\d+.*$/i, "");
   str = str.replace(/\s*Capítulo\s*\d+.*$/i, "");
 
   const c1 = str.replace(/\s*\(\d{4}\).*$/, "").replace(/[:–—|].*$/, "").trim();
-  const cands = [];
-  const lower = c1.toLowerCase();
+  const cands = [c1];
 
-  // 1. Títulos normalizados prioritarios para búsquedas en español
-  if (lower.includes("deadpool")) {
-    cands.push("Deadpool y Lobezno", "Deadpool", "Deadpool 2");
-  } else if (lower.includes("intensamente") || lower.includes("inside out") || lower.includes("del reves")) {
-    cands.push("Intensamente 2", "IntensaMente", "Del reves 2");
-  } else if (lower.includes("dune") || lower.includes("duna")) {
-    cands.push("Dune 2", "Dune", "Duna");
-  } else if (lower.includes("beetlejuice")) {
-    cands.push("Beetlejuice Beetlejuice", "Beetlejuice");
-  } else if (lower.includes("alien")) {
-    cands.push("Alien Romulus", "Alien: Romulus", "Alien");
-  } else if (lower.includes("gladiador") || lower.includes("gladiator")) {
-    cands.push("Gladiator 2", "Gladiador 2", "Gladiator");
-  } else if (lower.includes("terrifier")) {
-    cands.push("Terrifier 3", "Terrifier");
-  }
-
-  // 2. Si tiene conector "&", probar primero la primera palabra clave o versión con "y"
   if (c1.includes(" & ")) {
-    cands.push(c1.split(" & ")[0].trim());
     cands.push(c1.replace(/\s*&\s*/g, " y "));
+    cands.push(c1.split(" & ")[0].trim());
   }
-
-  // 3. Cadena limpia estándar
-  cands.push(c1);
-
-  if (c1.includes(" y ")) {
-    cands.push(c1.split(" y ")[0].trim());
-  }
-  if (c1.includes(" - ")) {
-    cands.push(c1.split(" - ")[0].trim());
-  }
+  if (c1.includes(" y ")) cands.push(c1.split(" y ")[0].trim());
+  if (c1.includes(" - ")) cands.push(c1.split(" - ")[0].trim());
 
   const cNum = c1.replace(/\bII\b/g, "2").replace(/\bIII\b/g, "3").replace(/\bIV\b/g, "4");
   if (cNum !== c1) cands.push(cNum);
 
   const seen = new Set();
-  const result = [];
-  for (const c of cands) {
-    const clean = c.trim();
-    if (clean && !seen.has(clean.toLowerCase())) {
-      seen.add(clean.toLowerCase());
-      result.push(clean);
-    }
-  }
-  return result;
+  return cands.filter((c) => {
+    const k = c.trim().toLowerCase();
+    if (!k || seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 }
 
 function formatAudioLabel(raw) {
@@ -561,182 +513,95 @@ function formatAudioLabel(raw) {
   return raw ? ("🌐 " + raw) : "🇨🇴 Latino";
 }
 
-async function extractStreamFromKey(keyObj, targetUrl) {
+// Extrae la URL de voe.sx desde un key de watchfun (solo HTTP, sin browser)
+async function extractVoeUrl(key, pageUrl) {
   try {
-    const buUrl = "https://watchfun.top/bu/?key=" + encodeURIComponent(keyObj.key);
+    const buUrl = "https://watchfun.top/bu/?key=" + encodeURIComponent(key);
     const buRes = await kino.fetch(buUrl, {
-      headers: { "User-Agent": BROWSER_UA, "Referer": targetUrl }
+      headers: { "User-Agent": BROWSER_UA, "Referer": pageUrl }
     });
     if (!buRes.ok) return null;
-
     const buHtml = await buRes.text();
-    const iframeMatch = buHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
-    const iframeSrc = iframeMatch ? iframeMatch[1] : null;
-    if (!iframeSrc) return null;
 
-    if (iframeSrc.includes("nupload")) {
-      const nuRes = await kino.fetch(iframeSrc, {
-        headers: { "User-Agent": BROWSER_UA, "Referer": "https://watchfun.top/" }
-      });
-      if (nuRes.ok) {
-        const nuHtml = await nuRes.text();
-        const m3u8Url = decodeNupload(nuHtml);
-        if (m3u8Url && m3u8Url.startsWith("http")) {
-          return {
-            url: m3u8Url,
-            audio: formatAudioLabel(keyObj.lang),
-            serverIdx: keyObj.serverIdx || 1,
-            quality: keyObj.quality || "1080p",
-            headers: {
-              "User-Agent": BROWSER_UA,
-              "Referer": "https://nupload.my/",
-              "Origin": "https://nupload.my"
-            }
-          };
-        }
-      }
-    }
-  } catch (_) {}
-  return null;
+    // watchfun devuelve un iframe con src de nupload.my
+    const iframeMatch = buHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+    if (!iframeMatch) return null;
+    const nuploadUrl = iframeMatch[1];
+
+    // nupload.my es un wrapper: su iframe interno apunta a voe.sx
+    const nuRes = await kino.fetch(nuploadUrl, {
+      headers: { "User-Agent": BROWSER_UA, "Referer": "https://watchfun.top/" }
+    });
+    if (!nuRes.ok) return null;
+    const nuHtml = await nuRes.text();
+
+    const innerIframe = nuHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+    if (innerIframe && innerIframe[1]) return innerIframe[1];
+
+    return null;
+  } catch (_) {
+    return null;
+  }
 }
 
-async function resolveDirectHls(title, season, episode) {
-  if (typeof kino === "undefined" || typeof kino.fetch !== "function") return null;
+// Busca la página en repelisplus.my y extrae las URLs de voe.sx por idioma
+async function getVoeUrls(title, season, episode) {
+  if (typeof kino === "undefined") return [];
 
   const candidates = getTitleCandidates(title);
-  if (candidates.length === 0) return null;
+  if (candidates.length === 0) return [];
 
-  for (const q of candidates) {
+  for (const candidate of candidates.slice(0, 2)) {
     try {
-      const searchUrl = "https://repelisplus.my/buscar/" + encodeURIComponent(q);
-      const sRes = await kino.fetch(searchUrl, {
-        headers: { "User-Agent": BROWSER_UA }
-      });
-      if (!sRes.ok) continue;
+      const searchUrl = "https://repelisplus.my/buscar/" + encodeURIComponent(candidate);
+      const searchRes = await kino.fetch(searchUrl, { headers: { "User-Agent": BROWSER_UA } });
+      if (!searchRes.ok) continue;
 
-      const sHtml = await sRes.text();
-      const matches = Array.from(sHtml.matchAll(/<a[^>]+href=["\'](https:\/\/repelisplus\.my\/ver\/[^"\']+)["\']/gi));
-      if (!matches || matches.length === 0) continue;
+      const searchHtml = await searchRes.text();
+      const linkMatches = searchHtml.match(/href="(https:\/\/repelisplus\.my\/ver\/[^"]+)"/g);
+      if (!linkMatches || linkMatches.length === 0) continue;
 
-      const targetUrls = matches.slice(0, 2).map((m) => m[1]);
+      const targetUrl = linkMatches[0].replace(/^href="/, "").replace(/"$/, "");
+      const pageRes = await kino.fetch(targetUrl, { headers: { "User-Agent": BROWSER_UA } });
+      if (!pageRes.ok) continue;
 
-      for (const targetUrl of targetUrls) {
-        try {
-          const mRes = await kino.fetch(targetUrl, {
-            headers: { "User-Agent": BROWSER_UA }
-          });
-          if (!mRes.ok) continue;
+      const pageHtml = await pageRes.text();
+      const jaljzMatch = pageHtml.match(/var\s+jaljz\s*=\s*(\{[\s\S]*?\});/);
+      if (!jaljzMatch) continue;
 
-          const mHtml = await mRes.text();
-          const mJaljz = mHtml.match(/var\s+jaljz\s*=\s*(\{[\s\S]*?\});/);
-          if (!mJaljz) continue;
+      let jaljz = null;
+      try { jaljz = JSON.parse(jaljzMatch[1]); } catch (_) { continue; }
 
-          const jaljz = JSON.parse(mJaljz[1]);
-          const keyGroups = [];
-
-          if (season && episode && jaljz.pos && typeof jaljz.pos === "object") {
-            const sKey = String(season);
-            const eKey = String(episode);
-            const sObj = jaljz.pos[sKey] || jaljz.pos["1"];
-            if (sObj) {
-              const eObj = sObj[eKey] || sObj["1"];
-              if (eObj) {
-                for (const langKey of Object.keys(eObj)) {
-                  const langGroup = eObj[langKey];
-                  if (langGroup && langGroup.pos) {
-                    let srvNum = 1;
-                    for (const pk of Object.keys(langGroup.pos)) {
-                      const item = langGroup.pos[pk];
-                      if (item && item.key) {
-                        keyGroups.push({
-                          key: item.key,
-                          lang: langGroup.id || "Latino",
-                          serverIdx: srvNum++,
-                          quality: "1080p"
-                        });
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          } else {
-            for (const groupKey of ["0", "1", "2"]) {
-              const group = jaljz[groupKey];
-              if (!group || !group.pos) continue;
-              let srvNum = 1;
-              for (const posKey of Object.keys(group.pos)) {
-                const item = group.pos[posKey];
-                if (item && item.key) {
-                  keyGroups.push({
-                    key: item.key,
-                    lang: group.id || "Latino",
-                    serverIdx: srvNum++,
-                    quality: "1080p"
-                  });
-                }
-              }
-            }
+      // Recopilar keys por idioma
+      const servers = [];
+      for (const gid of Object.keys(jaljz)) {
+        const g = jaljz[gid];
+        if (!g || typeof g !== "object" || !g.pos) continue;
+        const lang = g.id || "Latino";
+        for (const pid of Object.keys(g.pos)) {
+          const p = g.pos[pid];
+          if (p && p.key) {
+            servers.push({ key: p.key, name: p.name, lang: lang });
           }
-
-          if (keyGroups.length === 0) continue;
-
-          // Extraer streams de forma secuencial segura (kino.browser.capture no soporta concurrencia)
-          const results = await Promise.all(keyGroups.slice(0, 4).map((k) => extractStreamFromKey(k, targetUrl)));
-          const validStreams = results.filter((s) => s && s.url);
-
-          if (validStreams.length > 0) {
-            // Asignar etiquetas exactas: "[calidad] Servidor N" y audio con bandera
-            // Agrupar por idioma para numerar Servidor 1, Servidor 2, etc.
-            const serverCounters = {};
-            const labeledStreams = validStreams.map((st) => {
-              const audioTag = st.audio;
-              if (!serverCounters[audioTag]) serverCounters[audioTag] = 1;
-              const n = serverCounters[audioTag]++;
-              const label = `[${st.quality}] Servidor ${n} (${audioTag})`;
-              return {
-                url: st.url,
-                label,
-                quality: st.quality,
-                audio: audioTag,
-                headers: st.headers
-              };
-            });
-
-            const primary = labeledStreams[0];
-            const alts = labeledStreams.slice(1).map((item) => ({
-              url: item.url,
-              label: item.label,
-              headers: item.headers
-            }));
-
-            // Construir lista de audioTracks con bandera
-            const seenAudio = new Set();
-            const audioTracks = [];
-            for (const st of labeledStreams) {
-              if (!seenAudio.has(st.audio)) {
-                seenAudio.add(st.audio);
-                audioTracks.push({
-                  language: st.audio,
-                  label: st.audio
-                });
-              }
-            }
-
-            return {
-              url: primary.url,
-              label: primary.label,
-              headers: primary.headers,
-              ...(alts.length > 0 ? { alternatives: alts } : {}),
-              ...(audioTracks.length > 0 ? { audioTracks } : {})
-            };
-          }
-        } catch (_) {}
+        }
       }
+
+      if (servers.length === 0) continue;
+
+      // Extraer URLs de voe.sx en paralelo (solo HTTP, rápido)
+      const voeResults = await Promise.all(
+        servers.slice(0, 6).map(async (srv) => {
+          const voeUrl = await extractVoeUrl(srv.key, targetUrl);
+          return voeUrl ? { voeUrl, lang: srv.lang, name: srv.name } : null;
+        })
+      );
+
+      const validVoes = voeResults.filter((v) => v && v.voeUrl);
+      if (validVoes.length > 0) return validVoes;
     } catch (_) {}
   }
 
-  return null;
+  return [];
 }
 
 export async function resolve(ref, options) {
@@ -747,96 +612,100 @@ export async function resolve(ref, options) {
   const title = parsed.title || "";
   const season = parsed.season;
   const number = parsed.number;
+  const imdb = parsed.imdb;
 
-  // Paso 1: Intentar resolución directa ultrarrápida HLS con alternativas
-  if (title) {
-    try {
-      const direct = await resolveDirectHls(title, season, number);
-      if (direct && direct.url && (direct.url.includes(".m3u8") || direct.url.includes(".mp4") || direct.url.includes(".lat/"))) {
-        return direct;
-      }
-    } catch (_) {}
+  // ── Paso 1: Extraer URLs de voe.sx por HTTP (rápido, <2s) ──
+  const voeServers = title ? await getVoeUrls(title, season, number) : [];
+
+  // ── Paso 2: Capturar voe.sx directamente con kino.browser.capture ──
+  // voe.sx está detrás de DDoS-Guard: necesita ejecución JS del navegador.
+  // kino.browser.capture resuelve el challenge y detecta el HLS que voe reproduce.
+  // Máximo 2 intentos secuenciales (2 × 15s = 30s, bien dentro de los 75s).
+  if (voeServers.length > 0 && typeof kino !== "undefined" && kino.browser && typeof kino.browser.capture === "function") {
+    for (let i = 0; i < Math.min(voeServers.length, 2); i++) {
+      const srv = voeServers[i];
+      try {
+        const captured = await kino.browser.capture(srv.voeUrl, {
+          timeoutMs: 15000,
+          autoplay: true,
+          headers: {
+            "User-Agent": BROWSER_UA,
+            "Referer": "https://nupload.my/",
+            "Origin": "https://nupload.my"
+          }
+        });
+
+        if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
+          const best = captured.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4"))) || captured.media[0];
+          if (best && best.url) {
+            const audio = formatAudioLabel(srv.lang);
+            const hdrs = Object.assign({
+              "User-Agent": BROWSER_UA,
+              "Referer": srv.voeUrl,
+              "Origin": "https://voe.sx"
+            }, best.headers || {});
+
+            // Construir alternatives con los demás servidores que ya tenemos URLs
+            const alts = [];
+            for (let j = 0; j < voeServers.length; j++) {
+              if (j === i) continue;
+              alts.push({
+                label: "[1080p] Servidor " + (j + 1) + " (" + formatAudioLabel(voeServers[j].lang) + ")",
+                url: voeServers[j].voeUrl,
+                headers: hdrs
+              });
+            }
+
+            return {
+              url: best.url,
+              label: "[1080p] Servidor " + (i + 1) + " (" + audio + ")",
+              headers: hdrs,
+              ...(alts.length > 0 ? { alternatives: alts } : {}),
+              audioTracks: [{ language: srv.lang === "Latino" ? "es-419" : "es", label: audio }]
+            };
+          }
+        }
+      } catch (_) {}
+    }
   }
 
-  // Paso 2: Fallback mediante captura browser (con timeout adecuado y extracción limpia de media)
-  const imdb = parsed.imdb || (parsed.tmdb ? ("tt" + parsed.tmdb) : "tt6263850");
-  let embedUrl = "";
-  if (season && number) {
-    embedUrl = "https://embed69.org/f/" + imdb + "-" + season + "x" + number + "/";
-  } else {
-    embedUrl = "https://embed69.org/f/" + imdb + "/";
-  }
+  // ── Paso 3: Fallback con embed69 (si hay IMDB) ──
+  if (imdb && typeof kino !== "undefined" && kino.browser && typeof kino.browser.capture === "function") {
+    const embedUrl = (season && number)
+      ? ("https://embed69.org/f/" + imdb + "-" + season + "x" + number + "/")
+      : ("https://embed69.org/f/" + imdb + "/");
 
-  if (typeof kino !== "undefined" && kino.browser && typeof kino.browser.capture === "function") {
-    // 1 intento a embed69 con Referer de embed69 (max 4 segundos para no retrasar la reproduccion)
     try {
-      const hEmbed = {
-        "Referer": "https://embed69.org/",
-        "Origin": "https://embed69.org",
-        "User-Agent": BROWSER_UA
-      };
       const captured = await kino.browser.capture(embedUrl, {
-        timeoutMs: 4000,
+        timeoutMs: 10000,
         autoplay: true,
-        headers: hEmbed
+        headers: {
+          "User-Agent": BROWSER_UA,
+          "Referer": "https://embed69.org/",
+          "Origin": "https://embed69.org"
+        }
       });
 
       if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
-        const videoMedia = captured.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4") || m.url.includes(".mpd"))) || captured.media[0];
-        if (videoMedia && videoMedia.url) {
-          const streamHeaders = Object.assign({}, hEmbed, videoMedia.headers || {});
+        const best = captured.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4"))) || captured.media[0];
+        if (best && best.url) {
           return {
-            url: videoMedia.url,
-            label: "[1080p] Servidor 1 (🇨🇴 Latino)",
-            headers: streamHeaders,
-            alternatives: [
-              { label: "[720p] Servidor 1 (🇨🇴 Latino)", url: videoMedia.url, headers: streamHeaders },
-              { label: "[480p] Servidor 1 (🇨🇴 Latino)", url: videoMedia.url, headers: streamHeaders }
-            ],
-            audioTracks: [{ language: "es-419", label: "🇨🇴 Latino" }]
-          };
-        }
-      }
-    } catch (_) {}
-
-    // Respaldo de emergencia directo a vidlink si embed69 no responde
-    try {
-      const vidlinkUrl = (season && number) ? (`https://vidlink.pro/tv/${imdb}/${season}/${number}`) : (`https://vidlink.pro/movie/${imdb}`);
-      const hVid = {
-        "Referer": "https://vidlink.pro/",
-        "Origin": "https://vidlink.pro",
-        "User-Agent": BROWSER_UA
-      };
-      const capturedVid = await kino.browser.capture(vidlinkUrl, {
-        timeoutMs: 4000,
-        autoplay: true,
-        headers: hVid
-      });
-
-      if (capturedVid && Array.isArray(capturedVid.media) && capturedVid.media.length > 0) {
-        const vidMedia = capturedVid.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4") || m.url.includes(".mpd"))) || capturedVid.media[0];
-        if (vidMedia && vidMedia.url) {
-          const sHeaders = Object.assign({}, hVid, vidMedia.headers || {});
-          return {
-            url: vidMedia.url,
-            label: "[1080p] Servidor 1 (🇺🇸 Inglés)",
-            headers: sHeaders,
-            alternatives: [
-              { label: "[720p] Servidor 1 (🇺🇸 Inglés)", url: vidMedia.url, headers: sHeaders },
-              { label: "[480p] Servidor 1 (🇺🇸 Inglés)", url: vidMedia.url, headers: sHeaders }
-            ],
-            audioTracks: [{ language: "en", label: "🇺🇸 Inglés" }]
+            url: best.url,
+            label: "[1080p] Embed69 (🇨🇴 Latino)",
+            headers: Object.assign({
+              "User-Agent": BROWSER_UA,
+              "Referer": "https://embed69.org/"
+            }, best.headers || {})
           };
         }
       }
     } catch (_) {}
   }
 
-  // NUNCA devolver HTML plano a ExoPlayer si el reproductor no devolvió video
+  // ── Sin video disponible ──
   if (typeof kino !== "undefined" && typeof kino.error === "function") {
     throw kino.error("unavailable", "No se encontró un flujo de video compatible para reproducir en este momento.");
   }
-
   throw new Error("No se encontró un flujo de video compatible.");
 }
 
