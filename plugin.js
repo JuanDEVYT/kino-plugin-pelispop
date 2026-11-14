@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 1.1.3 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
+// Versión 1.1.4 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
 // y motor de resolución de video HLS rápido en español latino (sin Cloudflare 522/timeout).
 
-const PLUGIN_VERSION = "1.1.3";
+const PLUGIN_VERSION = "1.1.4";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -552,6 +552,15 @@ function getTitleCandidates(raw) {
   return result;
 }
 
+function formatAudioLabel(raw) {
+  const lower = String(raw || "").toLowerCase();
+  if (lower.includes("lat")) return "🇨🇴 Latino";
+  if (lower.includes("esp") || lower.includes("cast")) return "🇪🇸 Castellano";
+  if (lower.includes("ing") || lower.includes("sub") || lower.includes("eng")) return "🇺🇸 Inglés";
+  if (lower.includes("por") || lower.includes("bra")) return "🇧🇷 Portugués";
+  return raw ? ("🌐 " + raw) : "🇨🇴 Latino";
+}
+
 async function extractStreamFromKey(keyObj, targetUrl) {
   try {
     const buUrl = "https://watchfun.top/bu/?key=" + encodeURIComponent(keyObj.key);
@@ -576,8 +585,8 @@ async function extractStreamFromKey(keyObj, targetUrl) {
       return {
         url: m3u8Url,
         audio: formatAudioLabel(keyObj.lang),
-        lang: keyObj.lang,
         serverIdx: keyObj.serverIdx || 1,
+        quality: keyObj.quality || "1080p",
         headers: {
           "User-Agent": BROWSER_UA,
           "Referer": "https://nupload.my/",
@@ -621,7 +630,7 @@ async function resolveDirectHls(title, season, episode) {
           if (!mJaljz) continue;
 
           const jaljz = JSON.parse(mJaljz[1]);
-          const keys = [];
+          const keyGroups = [];
 
           if (season && episode && jaljz.pos && typeof jaljz.pos === "object") {
             const sKey = String(season);
@@ -633,10 +642,16 @@ async function resolveDirectHls(title, season, episode) {
                 for (const langKey of Object.keys(eObj)) {
                   const langGroup = eObj[langKey];
                   if (langGroup && langGroup.pos) {
+                    let srvNum = 1;
                     for (const pk of Object.keys(langGroup.pos)) {
                       const item = langGroup.pos[pk];
                       if (item && item.key) {
-                        keys.push({ key: item.key, lang: langGroup.id || "Latino" });
+                        keyGroups.push({
+                          key: item.key,
+                          lang: langGroup.id || "Latino",
+                          serverIdx: srvNum++,
+                          quality: "1080p"
+                        });
                       }
                     }
                   }
@@ -647,81 +662,41 @@ async function resolveDirectHls(title, season, episode) {
             for (const groupKey of ["0", "1", "2"]) {
               const group = jaljz[groupKey];
               if (!group || !group.pos) continue;
+              let srvNum = 1;
               for (const posKey of Object.keys(group.pos)) {
                 const item = group.pos[posKey];
                 if (item && item.key) {
-                  keys.push({ key: item.key, lang: group.id || "Latino" });
+                  keyGroups.push({
+                    key: item.key,
+                    lang: group.id || "Latino",
+                    serverIdx: srvNum++,
+                    quality: "1080p"
+                  });
                 }
               }
             }
           }
 
-          if (keys.length === 0) continue;
+          if (keyGroups.length === 0) continue;
 
           // Extraer streams de los servidores disponibles en paralelo
-          const chosenKeys = keys.slice(0, 4);
-          const results = await Promise.all(chosenKeys.map((k, idx) => extractStreamFromKey({ ...k, serverIdx: idx + 1 }, targetUrl)));
-          const streamSources = results.filter((s) => s && s.url);
+          const results = await Promise.all(keyGroups.map((k) => extractStreamFromKey(k, targetUrl)));
+          const validStreams = results.filter((s) => s && s.url);
 
-          if (streamSources.length > 0) {
-            const qualityStreams = [];
-            for (const st of streamSources) {
-              if (!st.url || (!st.url.includes(".m3u8") && !st.url.includes(".mp4") && !st.url.includes(".lat/"))) {
-                continue;
-              }
-
-              let variants = [];
-              let isPlayable = false;
-              try {
-                const pRes = await kino.fetch(st.url, { headers: st.headers });
-                if (pRes.ok) {
-                  const contentType = pRes.headers && (pRes.headers["content-type"] || pRes.headers["Content-Type"]) || "";
-                  const m3u8Content = await pRes.text();
-                  // Si devuelve HTML o error 5xx, descartar para evitar parsing_container_unsupported
-                  if (!m3u8Content.includes("<!DOCTYPE") && !m3u8Content.includes("<html") && !contentType.includes("text/html")) {
-                    isPlayable = true;
-                    if (m3u8Content.includes("#EXT-X-STREAM-INF:")) {
-                      variants = parseMasterPlaylist(m3u8Content, st.url);
-                    }
-                  }
-                }
-              } catch (_) {}
-
-              if (!isPlayable) continue;
-
-              if (variants.length > 0) {
-                for (const v of variants) {
-                  qualityStreams.push({
-                    url: v.url,
-                    audio: st.audio || formatAudioLabel(st.lang),
-                    quality: v.quality,
-                    headers: st.headers
-                  });
-                }
-              } else {
-                for (const q of ["1080p", "720p", "480p"]) {
-                  qualityStreams.push({
-                    url: st.url,
-                    audio: st.audio || formatAudioLabel(st.lang),
-                    quality: q,
-                    headers: st.headers
-                  });
-                }
-              }
-            }
-
-            // Asignar etiquetas exactas: "[calidad] Servidor N (Audio)"
+          if (validStreams.length > 0) {
+            // Asignar etiquetas exactas: "[calidad] Servidor N" y audio con bandera
+            // Agrupar por idioma para numerar Servidor 1, Servidor 2, etc.
             const serverCounters = {};
-            const labeledStreams = qualityStreams.map((st) => {
-              const pairKey = `${st.audio}_${st.quality}`;
-              if (!serverCounters[pairKey]) serverCounters[pairKey] = 1;
-              const n = serverCounters[pairKey]++;
-              const label = `[${st.quality}] Servidor ${n} (${st.audio})`;
+            const labeledStreams = validStreams.map((st) => {
+              const audioTag = st.audio;
+              if (!serverCounters[audioTag]) serverCounters[audioTag] = 1;
+              const n = serverCounters[audioTag]++;
+              const label = `[${st.quality}] Servidor ${n} (${audioTag})`;
               return {
                 url: st.url,
                 label,
                 quality: st.quality,
-                audio: st.audio,
+                audio: audioTag,
                 headers: st.headers
               };
             });
@@ -781,100 +756,39 @@ export async function resolve(ref, options) {
     } catch (_) {}
   }
 
-  // Paso 2: Fallback resiliente mediante cascada de proveedores (embed69 -> vidlink -> autoembed -> vidsrc)
+  // Paso 2: Fallback mediante captura browser (con timeout adecuado y extracción limpia de media)
   const imdb = parsed.imdb || (parsed.tmdb ? ("tt" + parsed.tmdb) : "tt6263850");
-  const candidatesProviders = [];
+  let embedUrl = "";
   if (season && number) {
-    candidatesProviders.push({
-      id: "embed69",
-      url: "https://embed69.org/f/" + imdb + "-" + season + "x" + number + "/",
-      referer: "https://pelispop.mov/",
-      audio: "🇨🇴 Latino",
-      timeout: 4000
-    });
-    candidatesProviders.push({
-      id: "vidlink",
-      url: "https://vidlink.pro/tv/" + imdb + "/" + season + "/" + number,
-      referer: "https://vidlink.pro/",
-      audio: "🇺🇸 Inglés",
-      timeout: 7000
-    });
-    candidatesProviders.push({
-      id: "autoembed",
-      url: "https://autoembed.co/tv/imdb/" + imdb + "-" + season + "-" + number,
-      referer: "https://autoembed.co/",
-      audio: "🇺🇸 Inglés",
-      timeout: 5000
-    });
+    embedUrl = "https://embed69.org/f/" + imdb + "-" + season + "x" + number + "/";
   } else {
-    candidatesProviders.push({
-      id: "embed69",
-      url: "https://embed69.org/f/" + imdb + "/",
-      referer: "https://pelispop.mov/",
-      audio: "🇨🇴 Latino",
-      timeout: 4000
-    });
-    candidatesProviders.push({
-      id: "vidlink",
-      url: "https://vidlink.pro/movie/" + imdb,
-      referer: "https://vidlink.pro/",
-      audio: "🇺🇸 Inglés",
-      timeout: 7000
-    });
-    candidatesProviders.push({
-      id: "autoembed",
-      url: "https://autoembed.co/movie/imdb/" + imdb,
-      referer: "https://autoembed.co/",
-      audio: "🇺🇸 Inglés",
-      timeout: 5000
-    });
+    embedUrl = "https://embed69.org/f/" + imdb + "/";
   }
 
+  const defaultHeaders = {
+    "Referer": "https://pelispop.mov/",
+    "Origin": "https://pelispop.mov/",
+    "User-Agent": BROWSER_UA
+  };
+
   if (typeof kino !== "undefined" && kino.browser && typeof kino.browser.capture === "function") {
-    for (const prov of candidatesProviders) {
-      try {
-        const provHeaders = {
-          "Referer": prov.referer,
-          "Origin": prov.referer,
-          "User-Agent": BROWSER_UA
-        };
-        const captured = await kino.browser.capture(prov.url, {
-          timeoutMs: prov.timeout || 5000,
-          autoplay: true,
-          headers: provHeaders
-        });
+    try {
+      const captured = await kino.browser.capture(embedUrl, {
+        timeoutMs: 18000,
+        autoplay: true,
+        headers: defaultHeaders
+      });
 
-        if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
-          const videoMedias = captured.media.filter((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4") || m.url.includes(".mpd") || m.url.includes("manifest") || m.url.includes("playlist")));
-          const primaryMedia = videoMedias[0] || captured.media[0];
-          if (primaryMedia && primaryMedia.url) {
-            const streamHeaders = Object.assign({}, provHeaders, primaryMedia.headers || {});
-            const currentAudio = prov.audio || "🇺🇸 Inglés";
-            const otherAudio = currentAudio.includes("Latino") ? "🇺🇸 Inglés" : "🇨🇴 Latino";
-
-            const fallbackAlts = [
-              { label: `[720p] Servidor 1 (${currentAudio})`, url: primaryMedia.url, headers: streamHeaders },
-              { label: `[480p] Servidor 1 (${currentAudio})`, url: primaryMedia.url, headers: streamHeaders },
-              { label: `[1080p] Servidor 2 (${currentAudio})`, url: primaryMedia.url, headers: streamHeaders },
-              { label: `[720p] Servidor 2 (${currentAudio})`, url: primaryMedia.url, headers: streamHeaders },
-              { label: `[480p] Servidor 2 (${currentAudio})`, url: primaryMedia.url, headers: streamHeaders },
-              { label: `[1080p] Servidor 1 (${otherAudio})`, url: primaryMedia.url, headers: streamHeaders }
-            ];
-
-            return {
-              url: primaryMedia.url,
-              label: `[1080p] Servidor 1 (${currentAudio})`,
-              headers: streamHeaders,
-              alternatives: fallbackAlts,
-              audioTracks: [
-                { language: currentAudio, label: currentAudio },
-                { language: otherAudio, label: otherAudio }
-              ]
-            };
-          }
+      if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
+        const videoMedia = captured.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4"))) || captured.media[0];
+        if (videoMedia && videoMedia.url) {
+          return {
+            url: videoMedia.url,
+            headers: Object.assign({}, defaultHeaders, videoMedia.headers || {})
+          };
         }
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
   }
 
   // NUNCA devolver HTML plano a ExoPlayer si el reproductor no devolvió video
