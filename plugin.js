@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 1.2.1 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
+// Versión 1.2.2 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
 // y motor de resolución de video HLS rápido en español latino (sin Cloudflare 522/timeout).
 
-const PLUGIN_VERSION = "1.2.1";
+const PLUGIN_VERSION = "1.2.2";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -570,29 +570,60 @@ async function extractStreamFromKey(keyObj, targetUrl) {
     if (!buRes.ok) return null;
 
     const buHtml = await buRes.text();
-    const iframeMatch = buHtml.match(/<iframe[^>]+src=["\']([^"\']+)["\']/i);
+    const iframeMatch = buHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
     const iframeSrc = iframeMatch ? iframeMatch[1] : null;
-    if (!iframeSrc || !iframeSrc.includes("nupload")) return null;
+    if (!iframeSrc) return null;
+
+    // Intentar captura nativa en browser con el Referer exacto de watchfun
+    if (typeof kino !== "undefined" && kino.browser && typeof kino.browser.capture === "function") {
+      try {
+        const captured = await kino.browser.capture(iframeSrc, {
+          timeoutMs: 5000,
+          autoplay: true,
+          headers: {
+            "User-Agent": BROWSER_UA,
+            "Referer": buUrl,
+            "Origin": "https://watchfun.top"
+          }
+        });
+        if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
+          const directMedia = captured.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4"))) || captured.media[0];
+          if (directMedia && directMedia.url) {
+            return {
+              url: directMedia.url,
+              audio: formatAudioLabel(keyObj.lang),
+              serverIdx: keyObj.serverIdx || 1,
+              quality: keyObj.quality || "1080p",
+              headers: Object.assign({
+                "User-Agent": BROWSER_UA,
+                "Referer": iframeSrc,
+                "Origin": "https://nupload.my"
+              }, directMedia.headers || {})
+            };
+          }
+        }
+      } catch (_) {}
+    }
 
     const nuRes = await kino.fetch(iframeSrc, {
       headers: { "User-Agent": BROWSER_UA, "Referer": "https://watchfun.top/" }
     });
-    if (!nuRes.ok) return null;
-
-    const nuHtml = await nuRes.text();
-    const m3u8Url = decodeNupload(nuHtml);
-    if (m3u8Url && m3u8Url.startsWith("http")) {
-      return {
-        url: m3u8Url,
-        audio: formatAudioLabel(keyObj.lang),
-        serverIdx: keyObj.serverIdx || 1,
-        quality: keyObj.quality || "1080p",
-        headers: {
-          "User-Agent": BROWSER_UA,
-          "Referer": "https://nupload.my/",
-          "Origin": "https://nupload.my"
-        }
-      };
+    if (nuRes.ok) {
+      const nuHtml = await nuRes.text();
+      const m3u8Url = decodeNupload(nuHtml);
+      if (m3u8Url && m3u8Url.startsWith("http")) {
+        return {
+          url: m3u8Url,
+          audio: formatAudioLabel(keyObj.lang),
+          serverIdx: keyObj.serverIdx || 1,
+          quality: keyObj.quality || "1080p",
+          headers: {
+            "User-Agent": BROWSER_UA,
+            "Referer": "https://nupload.my/",
+            "Origin": "https://nupload.my"
+          }
+        };
+      }
     }
   } catch (_) {}
   return null;
@@ -679,9 +710,15 @@ async function resolveDirectHls(title, season, episode) {
 
           if (keyGroups.length === 0) continue;
 
-          // Extraer streams de los servidores disponibles en paralelo
-          const results = await Promise.all(keyGroups.map((k) => extractStreamFromKey(k, targetUrl)));
-          const validStreams = results.filter((s) => s && s.url);
+          // Extraer streams de forma secuencial segura (kino.browser.capture no soporta concurrencia)
+          const validStreams = [];
+          for (const k of keyGroups.slice(0, 3)) {
+            const st = await extractStreamFromKey(k, targetUrl);
+            if (st && st.url) {
+              validStreams.push(st);
+              break;
+            }
+          }
 
           if (validStreams.length > 0) {
             // Asignar etiquetas exactas: "[calidad] Servidor N" y audio con bandera
