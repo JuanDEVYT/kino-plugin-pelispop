@@ -1,38 +1,24 @@
 {
   "id": "pelispop",
   "name": "PelisPop",
-  "version": "1.2.4",
+  "version": "2.0.0",
   "apiVersion": 8,
   "entry": "plugin.js",
   "icon": "icon.png",
   "color": "#03c1ef",
-  "description": "Películas, series y anime de PelisPop en español latino con interfaz declarativa completa y servidores de reproducción rápida HLS.",
+  "description": "Películas, series y anime de PelisPop en español latino. Motor v2: resolución directa voe.sx sin loops ni timeouts.",
   "author": "JuanDEVYT",
   "homepage": "https://github.com/JuanDEVYT/kino-plugin-pelispop",
   "browser": true,
   "hosts": [
     "pelispop.mov",
-    "embed69.org",
     "repelisplus.my",
     "watchfun.top",
     "nupload.my",
-    "sv3.ibra.lat",
-    "cnddim.xyz",
-    "api.themoviedb.org",
-    "image.tmdb.org",
-    "raw.githubusercontent.com",
-    "ibra.lat",
-    "sv1.ibra.lat",
-    "sv2.ibra.lat",
-    "sv4.ibra.lat",
-    "sv5.ibra.lat",
-    "sv6.ibra.lat",
-    "sv7.ibra.lat",
-    "sv8.ibra.lat",
-    "vidsrc.to",
-    "vidsrc.me",
     "voe.sx",
-    "vidlink.pro"
+    "embed69.org",
+    "image.tmdb.org",
+    "raw.githubusercontent.com"
   ],
   "streamHosts": "any",
   "capabilities": [
@@ -83,27 +69,6 @@
       "type": "section",
       "label": "Configuración General",
       "labelEn": "General Settings"
-    },
-    {
-      "key": "serverPreference",
-      "type": "select",
-      "default": "hls",
-      "label": "Servidor de vídeo",
-      "labelEn": "Video Server",
-      "hint": "Servidor principal para reproducir enlaces.",
-      "hintEn": "Main server used for video streaming.",
-      "options": [
-        {
-          "value": "hls",
-          "label": "HLS Rápido Latino (Recomendado)",
-          "labelEn": "Fast HLS Latino (Recommended)"
-        },
-        {
-          "value": "embed69",
-          "label": "Embed69",
-          "labelEn": "Embed69"
-        }
-      ]
     },
     {
       "key": "openPortal",
