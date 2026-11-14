@@ -1,7 +1,7 @@
 {
   "id": "pelispop",
   "name": "PelisPop",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "apiVersion": 8,
   "entry": "plugin.js",
   "icon": "icon.png",
@@ -30,7 +30,9 @@
     "sv7.ibra.lat",
     "sv8.ibra.lat",
     "vidsrc.to",
-    "vidsrc.me"
+    "vidsrc.me",
+    "autoembed.co",
+    "vidlink.pro"
   ],
   "streamHosts": "any",
   "capabilities": [
