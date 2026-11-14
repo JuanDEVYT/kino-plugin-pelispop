@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 1.1.7 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
+// Versión 1.1.8 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
 // y motor de resolución de video HLS rápido en español latino (sin Cloudflare 522/timeout).
 
-const PLUGIN_VERSION = "1.1.7";
+const PLUGIN_VERSION = "1.1.8";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -561,29 +561,51 @@ async function extractStreamFromKey(keyObj, targetUrl) {
     if (!buRes.ok) return null;
 
     const buHtml = await buRes.text();
-    const iframeMatch = buHtml.match(/<iframe[^>]+src=["\']([^"\']+)["\']/i);
+    const iframeMatch = buHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
     const iframeSrc = iframeMatch ? iframeMatch[1] : null;
-    if (!iframeSrc || !iframeSrc.includes("nupload")) return null;
+    if (!iframeSrc) return null;
+
+    if (iframeSrc.includes("nupload") && typeof kino !== "undefined" && kino.browser && typeof kino.browser.capture === "function") {
+      try {
+        const captured = await kino.browser.capture(iframeSrc, {
+          timeoutMs: 4000,
+          autoplay: true,
+          headers: { "User-Agent": BROWSER_UA, "Referer": "https://watchfun.top/" }
+        });
+        if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
+          const directMedia = captured.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4")));
+          if (directMedia && directMedia.url) {
+            return {
+              url: directMedia.url,
+              audio: formatAudioLabel(keyObj.lang),
+              lang: keyObj.lang,
+              serverIdx: keyObj.serverIdx || 1,
+              headers: Object.assign({ "User-Agent": BROWSER_UA, "Referer": "https://nupload.my/" }, directMedia.headers || {})
+            };
+          }
+        }
+      } catch (_) {}
+    }
 
     const nuRes = await kino.fetch(iframeSrc, {
       headers: { "User-Agent": BROWSER_UA, "Referer": "https://watchfun.top/" }
     });
-    if (!nuRes.ok) return null;
-
-    const nuHtml = await nuRes.text();
-    const m3u8Url = decodeNupload(nuHtml);
-    if (m3u8Url && m3u8Url.startsWith("http")) {
-      return {
-        url: m3u8Url,
-        audio: formatAudioLabel(keyObj.lang),
-        lang: keyObj.lang,
-        serverIdx: keyObj.serverIdx || 1,
-        headers: {
-          "User-Agent": BROWSER_UA,
-          "Referer": "https://nupload.my/",
-          "Origin": "https://nupload.my"
-        }
-      };
+    if (nuRes.ok) {
+      const nuHtml = await nuRes.text();
+      const m3u8Url = decodeNupload(nuHtml);
+      if (m3u8Url && m3u8Url.startsWith("http")) {
+        return {
+          url: m3u8Url,
+          audio: formatAudioLabel(keyObj.lang),
+          lang: keyObj.lang,
+          serverIdx: keyObj.serverIdx || 1,
+          headers: {
+            "User-Agent": BROWSER_UA,
+            "Referer": "https://nupload.my/",
+            "Origin": "https://nupload.my"
+          }
+        };
+      }
     }
   } catch (_) {}
   return null;
@@ -776,7 +798,7 @@ export async function resolve(ref, options) {
     } catch (_) {}
   }
 
-  // Paso 2: Fallback mediante captura browser (con timeout adecuado y extracción limpia de media)
+  // Paso 2: Fallback resiliente mediante captura browser (embed69 -> vidlink de respaldo inmediato)
   const imdb = parsed.imdb || (parsed.tmdb ? ("tt" + parsed.tmdb) : "tt6263850");
   let embedUrl = "";
   if (season && number) {
@@ -785,37 +807,42 @@ export async function resolve(ref, options) {
     embedUrl = "https://embed69.org/f/" + imdb + "/";
   }
 
-  const defaultHeaders = {
-    "Referer": "https://pelispop.mov/",
-    "Origin": "https://pelispop.mov/",
-    "User-Agent": BROWSER_UA
-  };
-
   if (typeof kino !== "undefined" && kino.browser && typeof kino.browser.capture === "function") {
-    try {
-      const captured = await kino.browser.capture(embedUrl, {
-        timeoutMs: 5000,
-        autoplay: true,
-        headers: defaultHeaders
-      });
+    const fallbackList = [
+      { url: embedUrl, ref: "https://pelispop.mov/", audio: "🇨🇴 Latino" },
+      { url: (season && number) ? ("https://vidlink.pro/tv/" + imdb + "/" + season + "/" + number) : ("https://vidlink.pro/movie/" + imdb), ref: "https://vidlink.pro/", audio: "🇺🇸 Inglés" }
+    ];
 
-      if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
-        const videoMedia = captured.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4"))) || captured.media[0];
-        if (videoMedia && videoMedia.url) {
-          const streamHeaders = Object.assign({}, defaultHeaders, videoMedia.headers || {});
-          return {
-            url: videoMedia.url,
-            label: "[1080p] Servidor 1 (🇨🇴 Latino)",
-            headers: streamHeaders,
-            alternatives: [
-              { label: "[720p] Servidor 1 (🇨🇴 Latino)", url: videoMedia.url, headers: streamHeaders },
-              { label: "[480p] Servidor 1 (🇨🇴 Latino)", url: videoMedia.url, headers: streamHeaders }
-            ],
-            audioTracks: [{ language: "🇨🇴 Latino", label: "🇨🇴 Latino" }]
-          };
+    for (const fb of fallbackList) {
+      try {
+        const captured = await kino.browser.capture(fb.url, {
+          timeoutMs: 4000,
+          autoplay: true,
+          headers: { "Referer": fb.ref, "Origin": fb.ref, "User-Agent": BROWSER_UA }
+        });
+
+        if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
+          const directMedia = captured.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4") || m.url.includes(".mpd") || m.url.includes("manifest")));
+          if (directMedia && directMedia.url) {
+            const h = Object.assign({ "Referer": fb.ref, "Origin": fb.ref, "User-Agent": BROWSER_UA }, directMedia.headers || {});
+            const alts = [
+              { label: "[720p] Servidor 1 (" + fb.audio + ")", url: directMedia.url, headers: h },
+              { label: "[480p] Servidor 1 (" + fb.audio + ")", url: directMedia.url, headers: h },
+              { label: "[1080p] Servidor 2 (" + fb.audio + ")", url: directMedia.url, headers: h },
+              { label: "[720p] Servidor 2 (" + fb.audio + ")", url: directMedia.url, headers: h },
+              { label: "[480p] Servidor 2 (" + fb.audio + ")", url: directMedia.url, headers: h }
+            ];
+            return {
+              url: directMedia.url,
+              label: "[1080p] Servidor 1 (" + fb.audio + ")",
+              headers: h,
+              alternatives: alts,
+              audioTracks: [{ language: fb.audio, label: fb.audio }]
+            };
+          }
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
   }
 
   // NUNCA devolver HTML plano a ExoPlayer si el reproductor no devolvió video
