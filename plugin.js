@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 1.2.0 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
+// Versión 1.2.1 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
 // y motor de resolución de video HLS rápido en español latino (sin Cloudflare 522/timeout).
 
-const PLUGIN_VERSION = "1.2.0";
+const PLUGIN_VERSION = "1.2.1";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -765,30 +765,40 @@ export async function resolve(ref, options) {
     embedUrl = "https://embed69.org/f/" + imdb + "/";
   }
 
-  const defaultHeaders = {
-    "Referer": "https://pelispop.mov/",
-    "Origin": "https://pelispop.mov/",
-    "User-Agent": BROWSER_UA
-  };
-
   if (typeof kino !== "undefined" && kino.browser && typeof kino.browser.capture === "function") {
-    try {
-      const captured = await kino.browser.capture(embedUrl, {
-        timeoutMs: 18000,
-        autoplay: true,
-        headers: defaultHeaders
-      });
+    // Probar las combinaciones de Referers requeridas por embed69 para evitar 403 / Cloudflare
+    const refererAttempts = [
+      "https://embed69.org/",
+      "https://pelispop.mov/",
+      "https://repelisplus.my/"
+    ];
 
-      if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
-        const videoMedia = captured.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4"))) || captured.media[0];
-        if (videoMedia && videoMedia.url) {
-          return {
-            url: videoMedia.url,
-            headers: Object.assign({}, defaultHeaders, videoMedia.headers || {})
-          };
+    for (const ref of refererAttempts) {
+      try {
+        const h = {
+          "Referer": ref,
+          "Origin": ref.replace(/\/$/, ""),
+          "User-Agent": BROWSER_UA
+        };
+        const captured = await kino.browser.capture(embedUrl, {
+          timeoutMs: 8000,
+          autoplay: true,
+          headers: h
+        });
+
+        if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
+          const videoMedia = captured.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4") || m.url.includes(".mpd"))) || captured.media[0];
+          if (videoMedia && videoMedia.url) {
+            // Inyectar Referer y User-Agent al stream para que ExoPlayer no reciba 403 del CDN
+            const streamHeaders = Object.assign({}, h, videoMedia.headers || {});
+            return {
+              url: videoMedia.url,
+              headers: streamHeaders
+            };
+          }
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
   }
 
   // NUNCA devolver HTML plano a ExoPlayer si el reproductor no devolvió video
