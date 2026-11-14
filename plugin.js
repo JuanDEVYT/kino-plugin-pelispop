@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 1.0.5 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
+// Versión 1.0.6 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
 // y motor de resolución de video HLS rápido en español latino (sin Cloudflare 522/timeout).
 
-const PLUGIN_VERSION = "1.0.5";
+const PLUGIN_VERSION = "1.0.6";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -494,21 +494,43 @@ function getTitleCandidates(raw) {
   let str = String(raw || "").trim();
   if (!str) return [];
 
-  // Limpiar etiquetas de episodio típicas: "Breaking Bad - T1:E1 Capítulo", "Serie 1x01", "Temporada 1"
+  // Limpiar etiquetas de episodio: "Breaking Bad - T1:E1 Piloto", "Serie 1x01", etc.
   str = str.replace(/\s*-\s*T\d+[:E\s].*$/i, "");
   str = str.replace(/\s*\b\d+x\d+\b.*$/i, "");
   str = str.replace(/\s*Temporada\s*\d+.*$/i, "");
   str = str.replace(/\s*Capítulo\s*\d+.*$/i, "");
 
   const c1 = str.replace(/\s*\(\d{4}\).*$/, "").replace(/[:–—|].*$/, "").trim();
-  const cands = [c1];
+  const cands = [];
+  const lower = c1.toLowerCase();
 
-  if (c1.includes(" & ")) {
-    cands.push(c1.replace(/\s*&\s*/g, " y "));
-    cands.push(c1.split(" & ")[0].trim());
+  // 1. Títulos normalizados prioritarios para búsquedas en español
+  if (lower.includes("deadpool")) {
+    cands.push("Deadpool y Lobezno", "Deadpool", "Deadpool 2");
+  } else if (lower.includes("intensamente") || lower.includes("inside out") || lower.includes("del reves")) {
+    cands.push("Intensamente 2", "IntensaMente", "Del reves 2");
+  } else if (lower.includes("dune") || lower.includes("duna")) {
+    cands.push("Dune 2", "Dune", "Duna");
+  } else if (lower.includes("beetlejuice")) {
+    cands.push("Beetlejuice Beetlejuice", "Beetlejuice");
+  } else if (lower.includes("alien")) {
+    cands.push("Alien Romulus", "Alien: Romulus", "Alien");
+  } else if (lower.includes("gladiador") || lower.includes("gladiator")) {
+    cands.push("Gladiator 2", "Gladiador 2", "Gladiator");
+  } else if (lower.includes("terrifier")) {
+    cands.push("Terrifier 3", "Terrifier");
   }
+
+  // 2. Si tiene conector "&", probar primero la primera palabra clave o versión con "y"
+  if (c1.includes(" & ")) {
+    cands.push(c1.split(" & ")[0].trim());
+    cands.push(c1.replace(/\s*&\s*/g, " y "));
+  }
+
+  // 3. Cadena limpia estándar
+  cands.push(c1);
+
   if (c1.includes(" y ")) {
-    cands.push(c1.replace(/\s*y\s*/g, " & "));
     cands.push(c1.split(" y ")[0].trim());
   }
   if (c1.includes(" - ")) {
@@ -517,29 +539,6 @@ function getTitleCandidates(raw) {
 
   const cNum = c1.replace(/\bII\b/g, "2").replace(/\bIII\b/g, "3").replace(/\bIV\b/g, "4");
   if (cNum !== c1) cands.push(cNum);
-
-  const lower = c1.toLowerCase();
-  if (lower.includes("deadpool")) {
-    cands.push("Deadpool y Lobezno", "Deadpool", "Deadpool 3");
-  }
-  if (lower.includes("intensamente") || lower.includes("inside out") || lower.includes("del reves")) {
-    cands.push("Intensamente 2", "IntensaMente", "Del reves 2", "Inside Out 2");
-  }
-  if (lower.includes("dune") || lower.includes("duna")) {
-    cands.push("Dune 2", "Duna: Parte Dos", "Dune", "Duna");
-  }
-  if (lower.includes("beetlejuice")) {
-    cands.push("Beetlejuice Beetlejuice", "Beetlejuice 2", "Bitelchús Bitelchús", "Beetlejuice");
-  }
-  if (lower.includes("alien")) {
-    cands.push("Alien Romulus", "Alien: Romulus", "Alien");
-  }
-  if (lower.includes("gladiador") || lower.includes("gladiator")) {
-    cands.push("Gladiator 2", "Gladiador 2", "Gladiator", "Gladiador");
-  }
-  if (lower.includes("terrifier")) {
-    cands.push("Terrifier 3", "Terrifier");
-  }
 
   const seen = new Set();
   const result = [];
@@ -551,6 +550,41 @@ function getTitleCandidates(raw) {
     }
   }
   return result;
+}
+
+async function extractStreamFromKey(keyObj, targetUrl) {
+  try {
+    const buUrl = "https://watchfun.top/bu/?key=" + encodeURIComponent(keyObj.key);
+    const buRes = await kino.fetch(buUrl, {
+      headers: { "User-Agent": BROWSER_UA, "Referer": targetUrl }
+    });
+    if (!buRes.ok) return null;
+
+    const buHtml = await buRes.text();
+    const iframeMatch = buHtml.match(/<iframe[^>]+src=["\']([^"\']+)["\']/i);
+    const iframeSrc = iframeMatch ? iframeMatch[1] : null;
+    if (!iframeSrc || !iframeSrc.includes("nupload")) return null;
+
+    const nuRes = await kino.fetch(iframeSrc, {
+      headers: { "User-Agent": BROWSER_UA, "Referer": "https://watchfun.top/" }
+    });
+    if (!nuRes.ok) return null;
+
+    const nuHtml = await nuRes.text();
+    const m3u8Url = decodeNupload(nuHtml);
+    if (m3u8Url && m3u8Url.startsWith("http")) {
+      return {
+        label: keyObj.lang ? `HLS (${keyObj.lang})` : "HLS Servidor",
+        url: m3u8Url,
+        headers: {
+          "User-Agent": BROWSER_UA,
+          "Referer": "https://nupload.my/",
+          "Origin": "https://nupload.my"
+        }
+      };
+    }
+  } catch (_) {}
+  return null;
 }
 
 async function resolveDirectHls(title, season, episode) {
@@ -571,7 +605,6 @@ async function resolveDirectHls(title, season, episode) {
       const matches = Array.from(sHtml.matchAll(/<a[^>]+href=["\'](https:\/\/repelisplus\.my\/ver\/[^"\']+)["\']/gi));
       if (!matches || matches.length === 0) continue;
 
-      // Probar los 2 primeros resultados más relevantes
       const targetUrls = matches.slice(0, 2).map((m) => m[1]);
 
       for (const targetUrl of targetUrls) {
@@ -621,42 +654,12 @@ async function resolveDirectHls(title, season, episode) {
             }
           }
 
-          const streamSources = [];
-          for (const k of keys.slice(0, 5)) {
-            try {
-              const buUrl = "https://watchfun.top/bu/?key=" + encodeURIComponent(k.key);
-              const buRes = await kino.fetch(buUrl, {
-                headers: { "User-Agent": BROWSER_UA, "Referer": targetUrl }
-              });
-              if (!buRes.ok) continue;
+          if (keys.length === 0) continue;
 
-              const buHtml = await buRes.text();
-              const iframeMatch = buHtml.match(/<iframe[^>]+src=["\']([^"\']+)["\']/i);
-              const iframeSrc = iframeMatch ? iframeMatch[1] : null;
-              if (!iframeSrc) continue;
-
-              const nuRes = await kino.fetch(iframeSrc, {
-                headers: { "User-Agent": BROWSER_UA, "Referer": "https://watchfun.top/" }
-              });
-              if (!nuRes.ok) continue;
-
-              const nuHtml = await nuRes.text();
-              const m3u8Url = decodeNupload(nuHtml);
-              if (m3u8Url && m3u8Url.startsWith("http")) {
-                const sHeaders = {
-                  "User-Agent": BROWSER_UA,
-                  "Referer": "https://nupload.my/",
-                  "Origin": "https://nupload.my"
-                };
-                streamSources.push({
-                  label: k.lang ? `HLS (${k.lang})` : `HLS Servidor ${streamSources.length + 1}`,
-                  url: m3u8Url,
-                  headers: sHeaders
-                });
-                if (streamSources.length >= 3) break;
-              }
-            } catch (_) {}
-          }
+          // Resolución paralela de servidores clave (Latino, Castellano, Sub)
+          const chosenKeys = keys.slice(0, 3);
+          const results = await Promise.all(chosenKeys.map((k) => extractStreamFromKey(k, targetUrl)));
+          const streamSources = results.filter((s) => s && s.url);
 
           if (streamSources.length > 0) {
             const primary = streamSources[0];
