@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 1.1.6 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
+// Versión 1.1.7 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
 // y motor de resolución de video HLS rápido en español latino (sin Cloudflare 522/timeout).
 
-const PLUGIN_VERSION = "1.1.6";
+const PLUGIN_VERSION = "1.1.7";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -794,7 +794,7 @@ export async function resolve(ref, options) {
   if (typeof kino !== "undefined" && kino.browser && typeof kino.browser.capture === "function") {
     try {
       const captured = await kino.browser.capture(embedUrl, {
-        timeoutMs: 18000,
+        timeoutMs: 5000,
         autoplay: true,
         headers: defaultHeaders
       });
