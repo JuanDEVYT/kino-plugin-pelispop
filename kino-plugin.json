@@ -1,12 +1,12 @@
 {
   "id": "pelispop",
   "name": "PelisPop",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "apiVersion": 8,
   "entry": "plugin.js",
   "icon": "icon.png",
   "color": "#03c1ef",
-  "description": "Películas, series y anime de PelisPop en español latino con interfaz declarativa completa y servidores de reproducción rápida HLS.",
+  "description": "Pel\u00edculas, series y anime de PelisPop en espa\u00f1ol latino con interfaz declarativa completa y servidores de reproducci\u00f3n r\u00e1pida HLS.",
   "author": "JuanDEVYT",
   "homepage": "https://github.com/JuanDEVYT/kino-plugin-pelispop",
   "browser": true,
@@ -79,21 +79,21 @@
     {
       "key": "generalSection",
       "type": "section",
-      "label": "Configuración General",
+      "label": "Configuraci\u00f3n General",
       "labelEn": "General Settings"
     },
     {
       "key": "serverPreference",
       "type": "select",
       "default": "hls",
-      "label": "Servidor de vídeo",
+      "label": "Servidor de v\u00eddeo",
       "labelEn": "Video Server",
       "hint": "Servidor principal para reproducir enlaces.",
       "hintEn": "Main server used for video streaming.",
       "options": [
         {
           "value": "hls",
-          "label": "HLS Rápido Latino (Recomendado)",
+          "label": "HLS R\u00e1pido Latino (Recomendado)",
           "labelEn": "Fast HLS Latino (Recommended)"
         },
         {
