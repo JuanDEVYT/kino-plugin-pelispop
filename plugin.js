@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 1.2.2 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
+// Versión 1.2.3 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
 // y motor de resolución de video HLS rápido en español latino (sin Cloudflare 522/timeout).
 
-const PLUGIN_VERSION = "1.2.2";
+const PLUGIN_VERSION = "1.2.3";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -803,39 +803,68 @@ export async function resolve(ref, options) {
   }
 
   if (typeof kino !== "undefined" && kino.browser && typeof kino.browser.capture === "function") {
-    // Probar las combinaciones de Referers requeridas por embed69 para evitar 403 / Cloudflare
-    const refererAttempts = [
-      "https://embed69.org/",
-      "https://pelispop.mov/",
-      "https://repelisplus.my/"
-    ];
+    // 1 intento a embed69 con Referer de embed69 (max 4 segundos para no retrasar la reproduccion)
+    try {
+      const hEmbed = {
+        "Referer": "https://embed69.org/",
+        "Origin": "https://embed69.org",
+        "User-Agent": BROWSER_UA
+      };
+      const captured = await kino.browser.capture(embedUrl, {
+        timeoutMs: 4000,
+        autoplay: true,
+        headers: hEmbed
+      });
 
-    for (const ref of refererAttempts) {
-      try {
-        const h = {
-          "Referer": ref,
-          "Origin": ref.replace(/\/$/, ""),
-          "User-Agent": BROWSER_UA
-        };
-        const captured = await kino.browser.capture(embedUrl, {
-          timeoutMs: 8000,
-          autoplay: true,
-          headers: h
-        });
-
-        if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
-          const videoMedia = captured.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4") || m.url.includes(".mpd"))) || captured.media[0];
-          if (videoMedia && videoMedia.url) {
-            // Inyectar Referer y User-Agent al stream para que ExoPlayer no reciba 403 del CDN
-            const streamHeaders = Object.assign({}, h, videoMedia.headers || {});
-            return {
-              url: videoMedia.url,
-              headers: streamHeaders
-            };
-          }
+      if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
+        const videoMedia = captured.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4") || m.url.includes(".mpd"))) || captured.media[0];
+        if (videoMedia && videoMedia.url) {
+          const streamHeaders = Object.assign({}, hEmbed, videoMedia.headers || {});
+          return {
+            url: videoMedia.url,
+            label: "[1080p] Servidor 1 (🇨🇴 Latino)",
+            headers: streamHeaders,
+            alternatives: [
+              { label: "[720p] Servidor 1 (🇨🇴 Latino)", url: videoMedia.url, headers: streamHeaders },
+              { label: "[480p] Servidor 1 (🇨🇴 Latino)", url: videoMedia.url, headers: streamHeaders }
+            ],
+            audioTracks: [{ language: "es-419", label: "🇨🇴 Latino" }]
+          };
         }
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
+
+    // Respaldo de emergencia directo a vidlink si embed69 no responde
+    try {
+      const vidlinkUrl = (season && number) ? (`https://vidlink.pro/tv/${imdb}/${season}/${number}`) : (`https://vidlink.pro/movie/${imdb}`);
+      const hVid = {
+        "Referer": "https://vidlink.pro/",
+        "Origin": "https://vidlink.pro",
+        "User-Agent": BROWSER_UA
+      };
+      const capturedVid = await kino.browser.capture(vidlinkUrl, {
+        timeoutMs: 4000,
+        autoplay: true,
+        headers: hVid
+      });
+
+      if (capturedVid && Array.isArray(capturedVid.media) && capturedVid.media.length > 0) {
+        const vidMedia = capturedVid.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4") || m.url.includes(".mpd"))) || capturedVid.media[0];
+        if (vidMedia && vidMedia.url) {
+          const sHeaders = Object.assign({}, hVid, vidMedia.headers || {});
+          return {
+            url: vidMedia.url,
+            label: "[1080p] Servidor 1 (🇺🇸 Inglés)",
+            headers: sHeaders,
+            alternatives: [
+              { label: "[720p] Servidor 1 (🇺🇸 Inglés)", url: vidMedia.url, headers: sHeaders },
+              { label: "[480p] Servidor 1 (🇺🇸 Inglés)", url: vidMedia.url, headers: sHeaders }
+            ],
+            audioTracks: [{ language: "en", label: "🇺🇸 Inglés" }]
+          };
+        }
+      }
+    } catch (_) {}
   }
 
   // NUNCA devolver HTML plano a ExoPlayer si el reproductor no devolvió video
