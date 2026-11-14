@@ -1,7 +1,7 @@
 {
   "id": "pelispop",
   "name": "PelisPop",
-  "version": "2.0.3",
+  "version": "2.1.0",
   "apiVersion": 8,
   "entry": "plugin.js",
   "icon": "icon.png",
@@ -9,7 +9,7 @@
   "description": "Películas, series y anime de PelisPop en español latino. Motor v2: resolución directa voe.sx sin loops ni timeouts.",
   "author": "JuanDEVYT",
   "homepage": "https://github.com/JuanDEVYT/kino-plugin-pelispop",
-  "browser": true,
+  "browser": "pages",
   "hosts": [
     "pelispop.mov",
     "repelisplus.my",
