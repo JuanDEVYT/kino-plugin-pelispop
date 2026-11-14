@@ -2,7 +2,7 @@
 // Versión 2.1.0 - browser:"pages" + kino.browser.page para extraer HLS de voe.sx sin capture.
 // Cadena: repelisplus.my → watchfun.top → nupload.my → voe.sx (browser.capture directo).
 
-const PLUGIN_VERSION = "2.1.0";
+const PLUGIN_VERSION = "2.1.1";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -687,6 +687,7 @@ export async function resolve(ref, options) {
       kino.log("[resolve] paso 2: page voe.sx " + srv.voeUrl.substring(0, 50));
       const pageResult = await kino.browser.page(srv.voeUrl, {
         timeoutMs: 25000,
+        waitFor: "sources",
         headers: {
           "User-Agent": BROWSER_UA,
           "Referer": "https://nupload.my/"
@@ -694,7 +695,15 @@ export async function resolve(ref, options) {
       });
 
       if (pageResult && pageResult.html) {
-        kino.log("[resolve] page HTML len=" + pageResult.html.length);
+        kino.log("[resolve] page HTML len=" + pageResult.html.length + " status=" + (pageResult.status || "?"));
+        // Log snippet around key patterns for debugging
+        var hlsIdx = pageResult.html.indexOf("hls");
+        var srcIdx = pageResult.html.indexOf("sources");
+        var m3u8Idx = pageResult.html.indexOf("m3u8");
+        var mp4Idx = pageResult.html.indexOf(".mp4");
+        kino.log("[resolve] patterns: hls=" + hlsIdx + " sources=" + srcIdx + " m3u8=" + m3u8Idx + " mp4=" + mp4Idx);
+        if (hlsIdx > 0) kino.log("[resolve] hls context: " + pageResult.html.substring(hlsIdx, hlsIdx + 120));
+        if (srcIdx > 0 && srcIdx !== hlsIdx) kino.log("[resolve] sources context: " + pageResult.html.substring(srcIdx, srcIdx + 120));
         const hlsUrl = extractHlsFromVoe(pageResult.html);
         if (hlsUrl) {
           kino.log("[resolve] HLS encontrado: " + hlsUrl.substring(0, 60));
