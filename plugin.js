@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 1.0.6 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
+// Versión 1.0.7 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
 // y motor de resolución de video HLS rápido en español latino (sin Cloudflare 522/timeout).
 
-const PLUGIN_VERSION = "1.0.6";
+const PLUGIN_VERSION = "1.0.7";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -552,6 +552,15 @@ function getTitleCandidates(raw) {
   return result;
 }
 
+function formatAudioLabel(raw) {
+  const lower = String(raw || "").toLowerCase();
+  if (lower.includes("lat")) return "🇨🇴 Latino";
+  if (lower.includes("esp") || lower.includes("cast")) return "🇪🇸 Castellano";
+  if (lower.includes("ing") || lower.includes("sub") || lower.includes("eng")) return "🇺🇸 Inglés";
+  if (lower.includes("por") || lower.includes("bra")) return "🇧🇷 Portugués";
+  return raw ? ("🌐 " + raw) : "🇨🇴 Latino";
+}
+
 async function extractStreamFromKey(keyObj, targetUrl) {
   try {
     const buUrl = "https://watchfun.top/bu/?key=" + encodeURIComponent(keyObj.key);
@@ -574,8 +583,10 @@ async function extractStreamFromKey(keyObj, targetUrl) {
     const m3u8Url = decodeNupload(nuHtml);
     if (m3u8Url && m3u8Url.startsWith("http")) {
       return {
-        label: keyObj.lang ? `HLS (${keyObj.lang})` : "HLS Servidor",
         url: m3u8Url,
+        audio: formatAudioLabel(keyObj.lang),
+        serverIdx: keyObj.serverIdx || 1,
+        quality: keyObj.quality || "1080p",
         headers: {
           "User-Agent": BROWSER_UA,
           "Referer": "https://nupload.my/",
@@ -619,7 +630,7 @@ async function resolveDirectHls(title, season, episode) {
           if (!mJaljz) continue;
 
           const jaljz = JSON.parse(mJaljz[1]);
-          const keys = [];
+          const keyGroups = [];
 
           if (season && episode && jaljz.pos && typeof jaljz.pos === "object") {
             const sKey = String(season);
@@ -631,10 +642,16 @@ async function resolveDirectHls(title, season, episode) {
                 for (const langKey of Object.keys(eObj)) {
                   const langGroup = eObj[langKey];
                   if (langGroup && langGroup.pos) {
+                    let srvNum = 1;
                     for (const pk of Object.keys(langGroup.pos)) {
                       const item = langGroup.pos[pk];
                       if (item && item.key) {
-                        keys.push({ key: item.key, lang: langGroup.id || "Latino" });
+                        keyGroups.push({
+                          key: item.key,
+                          lang: langGroup.id || "Latino",
+                          serverIdx: srvNum++,
+                          quality: "1080p"
+                        });
                       }
                     }
                   }
@@ -645,29 +662,71 @@ async function resolveDirectHls(title, season, episode) {
             for (const groupKey of ["0", "1", "2"]) {
               const group = jaljz[groupKey];
               if (!group || !group.pos) continue;
+              let srvNum = 1;
               for (const posKey of Object.keys(group.pos)) {
                 const item = group.pos[posKey];
                 if (item && item.key) {
-                  keys.push({ key: item.key, lang: group.id || "Latino" });
+                  keyGroups.push({
+                    key: item.key,
+                    lang: group.id || "Latino",
+                    serverIdx: srvNum++,
+                    quality: "1080p"
+                  });
                 }
               }
             }
           }
 
-          if (keys.length === 0) continue;
+          if (keyGroups.length === 0) continue;
 
-          // Resolución paralela de servidores clave (Latino, Castellano, Sub)
-          const chosenKeys = keys.slice(0, 3);
-          const results = await Promise.all(chosenKeys.map((k) => extractStreamFromKey(k, targetUrl)));
-          const streamSources = results.filter((s) => s && s.url);
+          // Extraer streams de los servidores disponibles en paralelo
+          const results = await Promise.all(keyGroups.map((k) => extractStreamFromKey(k, targetUrl)));
+          const validStreams = results.filter((s) => s && s.url);
 
-          if (streamSources.length > 0) {
-            const primary = streamSources[0];
-            const alts = streamSources.slice(1);
+          if (validStreams.length > 0) {
+            // Asignar etiquetas exactas: "[calidad] Servidor N" y audio con bandera
+            // Agrupar por idioma para numerar Servidor 1, Servidor 2, etc.
+            const serverCounters = {};
+            const labeledStreams = validStreams.map((st) => {
+              const audioTag = st.audio;
+              if (!serverCounters[audioTag]) serverCounters[audioTag] = 1;
+              const n = serverCounters[audioTag]++;
+              const label = `[${st.quality}] Servidor ${n} (${audioTag})`;
+              return {
+                url: st.url,
+                label,
+                quality: st.quality,
+                audio: audioTag,
+                headers: st.headers
+              };
+            });
+
+            const primary = labeledStreams[0];
+            const alts = labeledStreams.slice(1).map((item) => ({
+              url: item.url,
+              label: item.label,
+              headers: item.headers
+            }));
+
+            // Construir lista de audioTracks con bandera
+            const seenAudio = new Set();
+            const audioTracks = [];
+            for (const st of labeledStreams) {
+              if (!seenAudio.has(st.audio)) {
+                seenAudio.add(st.audio);
+                audioTracks.push({
+                  language: st.audio,
+                  label: st.audio
+                });
+              }
+            }
+
             return {
               url: primary.url,
+              label: primary.label,
               headers: primary.headers,
-              ...(alts.length > 0 ? { alternatives: alts } : {})
+              ...(alts.length > 0 ? { alternatives: alts } : {}),
+              ...(audioTracks.length > 0 ? { audioTracks } : {})
             };
           }
         } catch (_) {}
