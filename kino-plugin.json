@@ -1,7 +1,7 @@
 {
   "id": "pelispop",
   "name": "PelisPop",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "apiVersion": 8,
   "entry": "plugin.js",
   "icon": "icon.png",
@@ -20,7 +20,17 @@
     "cnddim.xyz",
     "api.themoviedb.org",
     "image.tmdb.org",
-    "raw.githubusercontent.com"
+    "raw.githubusercontent.com",
+    "ibra.lat",
+    "sv1.ibra.lat",
+    "sv2.ibra.lat",
+    "sv4.ibra.lat",
+    "sv5.ibra.lat",
+    "sv6.ibra.lat",
+    "sv7.ibra.lat",
+    "sv8.ibra.lat",
+    "vidsrc.to",
+    "vidsrc.me"
   ],
   "streamHosts": "any",
   "capabilities": [
@@ -81,8 +91,16 @@
       "hint": "Servidor principal para reproducir enlaces.",
       "hintEn": "Main server used for video streaming.",
       "options": [
-        { "value": "hls", "label": "HLS Rápido Latino (Recomendado)", "labelEn": "Fast HLS Latino (Recommended)" },
-        { "value": "embed69", "label": "Embed69", "labelEn": "Embed69" }
+        {
+          "value": "hls",
+          "label": "HLS Rápido Latino (Recomendado)",
+          "labelEn": "Fast HLS Latino (Recommended)"
+        },
+        {
+          "value": "embed69",
+          "label": "Embed69",
+          "labelEn": "Embed69"
+        }
       ]
     },
     {

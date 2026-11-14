@@ -483,106 +483,166 @@ function decodeNupload(html) {
   }
 }
 
-function cleanTitle(raw) {
-  return String(raw || "").replace(/\s*\(\d{4}\).*$/, "").replace(/[:–—|].*$/, "").trim();
+function getTitleCandidates(raw) {
+  const str = String(raw || "").trim();
+  if (!str) return [];
+  const c1 = str.replace(/\s*\(\d{4}\).*$/, "").replace(/[:–—|].*$/, "").trim();
+  const cands = [c1];
+
+  if (c1.includes(" & ")) {
+    cands.push(c1.replace(/\s*&\s*/g, " y "));
+    cands.push(c1.split(" & ")[0].trim());
+  }
+  if (c1.includes(" y ")) {
+    cands.push(c1.replace(/\s*y\s*/g, " & "));
+    cands.push(c1.split(" y ")[0].trim());
+  }
+  if (c1.includes(" - ")) {
+    cands.push(c1.split(" - ")[0].trim());
+  }
+
+  const cNum = c1.replace(/\bII\b/g, "2").replace(/\bIII\b/g, "3").replace(/\bIV\b/g, "4");
+  if (cNum !== c1) cands.push(cNum);
+
+  const lower = c1.toLowerCase();
+  if (lower.includes("deadpool")) {
+    cands.push("Deadpool y Lobezno", "Deadpool", "Deadpool 3");
+  }
+  if (lower.includes("intensamente") || lower.includes("inside out") || lower.includes("del reves")) {
+    cands.push("Intensamente 2", "IntensaMente", "Del reves 2", "Inside Out 2");
+  }
+  if (lower.includes("dune") || lower.includes("duna")) {
+    cands.push("Dune 2", "Duna: Parte Dos", "Dune", "Duna");
+  }
+  if (lower.includes("beetlejuice")) {
+    cands.push("Beetlejuice Beetlejuice", "Beetlejuice 2", "Bitelchús Bitelchús", "Beetlejuice");
+  }
+  if (lower.includes("alien")) {
+    cands.push("Alien Romulus", "Alien: Romulus", "Alien");
+  }
+  if (lower.includes("gladiador") || lower.includes("gladiator")) {
+    cands.push("Gladiator 2", "Gladiador 2", "Gladiator", "Gladiador");
+  }
+  if (lower.includes("terrifier")) {
+    cands.push("Terrifier 3", "Terrifier");
+  }
+
+  const seen = new Set();
+  const result = [];
+  for (const c of cands) {
+    const clean = c.trim();
+    if (clean && !seen.has(clean.toLowerCase())) {
+      seen.add(clean.toLowerCase());
+      result.push(clean);
+    }
+  }
+  return result;
 }
 
 async function resolveDirectHls(title, season, episode) {
   if (typeof kino === "undefined" || typeof kino.fetch !== "function") return null;
 
-  const q = cleanTitle(title);
-  if (!q) return null;
+  const candidates = getTitleCandidates(title);
+  if (candidates.length === 0) return null;
 
-  try {
-    const searchUrl = "https://repelisplus.my/buscar/" + encodeURIComponent(q);
-    const sRes = await kino.fetch(searchUrl, {
-      headers: { "User-Agent": BROWSER_UA }
-    });
-    if (!sRes.ok) return null;
+  for (const q of candidates) {
+    try {
+      const searchUrl = "https://repelisplus.my/buscar/" + encodeURIComponent(q);
+      const sRes = await kino.fetch(searchUrl, {
+        headers: { "User-Agent": BROWSER_UA }
+      });
+      if (!sRes.ok) continue;
 
-    const sHtml = await sRes.text();
-    const matches = Array.from(sHtml.matchAll(/<a[^>]+href=["'](https:\/\/repelisplus\.my\/ver\/[^"']+)["']/gi));
-    if (!matches || matches.length === 0) return null;
+      const sHtml = await sRes.text();
+      const matches = Array.from(sHtml.matchAll(/<a[^>]+href=["\'](https:\/\/repelisplus\.my\/ver\/[^"\']+)["\']/gi));
+      if (!matches || matches.length === 0) continue;
 
-    const targetUrl = matches[0][1];
-    const mRes = await kino.fetch(targetUrl, {
-      headers: { "User-Agent": BROWSER_UA }
-    });
-    if (!mRes.ok) return null;
+      // Probar los 2 primeros resultados
+      const targetUrls = matches.slice(0, 2).map((m) => m[1]);
 
-    const mHtml = await mRes.text();
-    const mJaljz = mHtml.match(/var\s+jaljz\s*=\s*(\{[\s\S]*?\});/);
-    if (!mJaljz) return null;
+      for (const targetUrl of targetUrls) {
+        try {
+          const mRes = await kino.fetch(targetUrl, {
+            headers: { "User-Agent": BROWSER_UA }
+          });
+          if (!mRes.ok) continue;
 
-    const jaljz = JSON.parse(mJaljz[1]);
-    const keys = [];
+          const mHtml = await mRes.text();
+          const mJaljz = mHtml.match(/var\s+jaljz\s*=\s*(\{[\s\S]*?\});/);
+          if (!mJaljz) continue;
 
-    if (season && episode && jaljz.pos && typeof jaljz.pos === "object") {
-      const sKey = String(season);
-      const eKey = String(episode);
-      const sObj = jaljz.pos[sKey] || jaljz.pos["1"];
-      if (sObj) {
-        const eObj = sObj[eKey] || sObj["1"];
-        if (eObj) {
-          for (const langKey of Object.keys(eObj)) {
-            const langGroup = eObj[langKey];
-            if (langGroup && langGroup.pos) {
-              for (const pk of Object.keys(langGroup.pos)) {
-                const item = langGroup.pos[pk];
+          const jaljz = JSON.parse(mJaljz[1]);
+          const keys = [];
+
+          if (season && episode && jaljz.pos && typeof jaljz.pos === "object") {
+            const sKey = String(season);
+            const eKey = String(episode);
+            const sObj = jaljz.pos[sKey] || jaljz.pos["1"];
+            if (sObj) {
+              const eObj = sObj[eKey] || sObj["1"];
+              if (eObj) {
+                for (const langKey of Object.keys(eObj)) {
+                  const langGroup = eObj[langKey];
+                  if (langGroup && langGroup.pos) {
+                    for (const pk of Object.keys(langGroup.pos)) {
+                      const item = langGroup.pos[pk];
+                      if (item && item.key) {
+                        keys.push({ key: item.key, lang: langGroup.id || "Latino" });
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } else {
+            for (const groupKey of ["0", "1", "2"]) {
+              const group = jaljz[groupKey];
+              if (!group || !group.pos) continue;
+              for (const posKey of Object.keys(group.pos)) {
+                const item = group.pos[posKey];
                 if (item && item.key) {
-                  keys.push({ key: item.key, lang: langGroup.id || "Latino" });
+                  keys.push({ key: item.key, lang: group.id || "Latino" });
                 }
               }
             }
           }
-        }
-      }
-    } else {
-      for (const groupKey of ["0", "1", "2"]) {
-        const group = jaljz[groupKey];
-        if (!group || !group.pos) continue;
-        for (const posKey of Object.keys(group.pos)) {
-          const item = group.pos[posKey];
-          if (item && item.key) {
-            keys.push({ key: item.key, lang: group.id || "Latino" });
+
+          for (const k of keys.slice(0, 4)) {
+            try {
+              const buUrl = "https://watchfun.top/bu/?key=" + encodeURIComponent(k.key);
+              const buRes = await kino.fetch(buUrl, {
+                headers: { "User-Agent": BROWSER_UA, "Referer": targetUrl }
+              });
+              if (!buRes.ok) continue;
+
+              const buHtml = await buRes.text();
+              const iframeMatch = buHtml.match(/<iframe[^>]+src=["\']([^"\']+)["\']/i);
+              const iframeSrc = iframeMatch ? iframeMatch[1] : null;
+              if (!iframeSrc) continue;
+
+              const nuRes = await kino.fetch(iframeSrc, {
+                headers: { "User-Agent": BROWSER_UA, "Referer": "https://watchfun.top/" }
+              });
+              if (!nuRes.ok) continue;
+
+              const nuHtml = await nuRes.text();
+              const m3u8Url = decodeNupload(nuHtml);
+              if (m3u8Url && m3u8Url.startsWith("http")) {
+                return {
+                  url: m3u8Url,
+                  headers: {
+                    "User-Agent": BROWSER_UA,
+                    "Referer": "https://nupload.my/",
+                    "Origin": "https://nupload.my"
+                  }
+                };
+              }
+            } catch (_) {}
           }
-        }
+        } catch (_) {}
       }
-    }
-
-    for (const k of keys.slice(0, 4)) {
-      try {
-        const buUrl = "https://watchfun.top/bu/?key=" + encodeURIComponent(k.key);
-        const buRes = await kino.fetch(buUrl, {
-          headers: { "User-Agent": BROWSER_UA, "Referer": targetUrl }
-        });
-        if (!buRes.ok) continue;
-
-        const buHtml = await buRes.text();
-        const iframeMatch = buHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
-        const iframeSrc = iframeMatch ? iframeMatch[1] : null;
-        if (!iframeSrc) continue;
-
-        const nuRes = await kino.fetch(iframeSrc, {
-          headers: { "User-Agent": BROWSER_UA, "Referer": "https://watchfun.top/" }
-        });
-        if (!nuRes.ok) continue;
-
-        const nuHtml = await nuRes.text();
-        const m3u8Url = decodeNupload(nuHtml);
-        if (m3u8Url && m3u8Url.startsWith("http")) {
-          return {
-            url: m3u8Url,
-            headers: {
-              "User-Agent": BROWSER_UA,
-              "Referer": "https://nupload.my/",
-              "Origin": "https://nupload.my"
-            }
-          };
-        }
-      } catch (_) {}
-    }
-  } catch (_) {}
+    } catch (_) {}
+  }
 
   return null;
 }
@@ -600,13 +660,13 @@ export async function resolve(ref, options) {
   if (title) {
     try {
       const direct = await resolveDirectHls(title, season, number);
-      if (direct && direct.url) {
+      if (direct && direct.url && (direct.url.includes(".m3u8") || direct.url.includes(".mp4") || direct.url.includes(".lat/"))) {
         return direct;
       }
     } catch (_) {}
   }
 
-  // Paso 2: Fallback secundario mediante captura browser si está disponible
+  // Paso 2: Fallback mediante captura browser (con timeout adecuado y extracción limpia de media)
   const imdb = parsed.imdb || (parsed.tmdb ? ("tt" + parsed.tmdb) : "tt6263850");
   let embedUrl = "";
   if (season && number) {
@@ -624,13 +684,13 @@ export async function resolve(ref, options) {
   if (typeof kino !== "undefined" && kino.browser && typeof kino.browser.capture === "function") {
     try {
       const captured = await kino.browser.capture(embedUrl, {
-        timeoutMs: 8000,
+        timeoutMs: 18000,
         autoplay: true,
         headers: defaultHeaders
       });
 
       if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
-        const videoMedia = captured.media.find((m) => m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4"))) || captured.media[0];
+        const videoMedia = captured.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4"))) || captured.media[0];
         if (videoMedia && videoMedia.url) {
           return {
             url: videoMedia.url,
@@ -641,13 +701,12 @@ export async function resolve(ref, options) {
     } catch (_) {}
   }
 
-  return {
-    url: embedUrl,
-    headers: defaultHeaders,
-    alternatives: [
-      { label: "Embed69", url: embedUrl, headers: defaultHeaders }
-    ]
-  };
+  // NUNCA devolver HTML plano a ExoPlayer si el reproductor no devolvió video
+  if (typeof kino !== "undefined" && typeof kino.error === "function") {
+    throw kino.error("unavailable", "No se encontró un flujo de video compatible para reproducir en este momento.");
+  }
+
+  throw new Error("No se encontró un flujo de video compatible.");
 }
 
 export async function section(arg) {
