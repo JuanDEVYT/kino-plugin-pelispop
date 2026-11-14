@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 2.0.1 - Logs de diagnóstico en resolve para depurar cadena HTTP.
+// Versión 2.0.2 - Fix búsqueda: candidato por palabra clave, timeout 20s, 1 capture.
 // Cadena: repelisplus.my → watchfun.top → nupload.my → voe.sx (browser.capture directo).
 
-const PLUGIN_VERSION = "2.0.1";
+const PLUGIN_VERSION = "2.0.2";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -483,7 +483,15 @@ function getTitleCandidates(raw) {
   str = str.replace(/\s*Capítulo\s*\d+.*$/i, "");
 
   const c1 = str.replace(/\s*\(\d{4}\).*$/, "").replace(/[:–—|].*$/, "").trim();
-  const cands = [c1];
+  const cands = [];
+
+  // Primera palabra significativa (>3 chars) como candidato prioritario
+  // repelisplus.my busca mejor con una sola palabra clave
+  const words = c1.split(/\s+/).filter(w => w.length > 2 && !/^(the|los|las|del|de|el|la|un|una|and|y|&)$/i.test(w));
+  if (words.length > 0) cands.push(words[0]);
+
+  // Título completo limpio
+  cands.push(c1);
 
   if (c1.includes(" & ")) {
     cands.push(c1.replace(/\s*&\s*/g, " y "));
@@ -558,7 +566,7 @@ async function getVoeUrls(title, season, episode) {
   kino.log("[resolve] title=" + title + " candidates=" + JSON.stringify(candidates));
   if (candidates.length === 0) return [];
 
-  for (const candidate of candidates.slice(0, 2)) {
+  for (const candidate of candidates.slice(0, 4)) {
     try {
       const searchUrl = "https://repelisplus.my/buscar/" + encodeURIComponent(candidate);
       kino.log("[resolve] buscando: " + searchUrl);
@@ -635,12 +643,12 @@ export async function resolve(ref, options) {
   // kino.browser.capture resuelve el challenge y detecta el HLS que voe reproduce.
   // Máximo 2 intentos secuenciales (2 × 15s = 30s, bien dentro de los 75s).
   if (voeServers.length > 0 && typeof kino !== "undefined" && kino.browser && typeof kino.browser.capture === "function") {
-    for (let i = 0; i < Math.min(voeServers.length, 2); i++) {
+    for (let i = 0; i < Math.min(voeServers.length, 1); i++) {
       const srv = voeServers[i];
       try {
         kino.log("[resolve] paso 2: capture voe.sx " + srv.voeUrl.substring(0, 50));
         const captured = await kino.browser.capture(srv.voeUrl, {
-          timeoutMs: 15000,
+          timeoutMs: 20000,
           autoplay: true,
           headers: {
             "User-Agent": BROWSER_UA,
