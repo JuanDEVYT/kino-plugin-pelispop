@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 1.0.4 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
+// Versión 1.0.5 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
 // y motor de resolución de video HLS rápido en español latino (sin Cloudflare 522/timeout).
 
-const PLUGIN_VERSION = "1.0.4";
+const PLUGIN_VERSION = "1.0.5";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -401,7 +401,7 @@ export async function episodes(ref) {
       const seasonList = seasons.filter((s) => s.season_number > 0);
       const allEpisodes = [];
 
-      for (const s of seasonList.slice(0, 3)) {
+      for (const s of seasonList) {
         try {
           const sDetail = await kino.tmdb("/tv/" + tmdbId + "/season/" + s.season_number, { language: "es-MX" });
           if (sDetail && Array.isArray(sDetail.episodes)) {
@@ -491,8 +491,15 @@ function decodeNupload(html) {
 }
 
 function getTitleCandidates(raw) {
-  const str = String(raw || "").trim();
+  let str = String(raw || "").trim();
   if (!str) return [];
+
+  // Limpiar etiquetas de episodio típicas: "Breaking Bad - T1:E1 Capítulo", "Serie 1x01", "Temporada 1"
+  str = str.replace(/\s*-\s*T\d+[:E\s].*$/i, "");
+  str = str.replace(/\s*\b\d+x\d+\b.*$/i, "");
+  str = str.replace(/\s*Temporada\s*\d+.*$/i, "");
+  str = str.replace(/\s*Capítulo\s*\d+.*$/i, "");
+
   const c1 = str.replace(/\s*\(\d{4}\).*$/, "").replace(/[:–—|].*$/, "").trim();
   const cands = [c1];
 
@@ -564,7 +571,7 @@ async function resolveDirectHls(title, season, episode) {
       const matches = Array.from(sHtml.matchAll(/<a[^>]+href=["\'](https:\/\/repelisplus\.my\/ver\/[^"\']+)["\']/gi));
       if (!matches || matches.length === 0) continue;
 
-      // Probar los 2 primeros resultados
+      // Probar los 2 primeros resultados más relevantes
       const targetUrls = matches.slice(0, 2).map((m) => m[1]);
 
       for (const targetUrl of targetUrls) {
@@ -614,7 +621,8 @@ async function resolveDirectHls(title, season, episode) {
             }
           }
 
-          for (const k of keys.slice(0, 4)) {
+          const streamSources = [];
+          for (const k of keys.slice(0, 5)) {
             try {
               const buUrl = "https://watchfun.top/bu/?key=" + encodeURIComponent(k.key);
               const buRes = await kino.fetch(buUrl, {
@@ -635,16 +643,29 @@ async function resolveDirectHls(title, season, episode) {
               const nuHtml = await nuRes.text();
               const m3u8Url = decodeNupload(nuHtml);
               if (m3u8Url && m3u8Url.startsWith("http")) {
-                return {
-                  url: m3u8Url,
-                  headers: {
-                    "User-Agent": BROWSER_UA,
-                    "Referer": "https://nupload.my/",
-                    "Origin": "https://nupload.my"
-                  }
+                const sHeaders = {
+                  "User-Agent": BROWSER_UA,
+                  "Referer": "https://nupload.my/",
+                  "Origin": "https://nupload.my"
                 };
+                streamSources.push({
+                  label: k.lang ? `HLS (${k.lang})` : `HLS Servidor ${streamSources.length + 1}`,
+                  url: m3u8Url,
+                  headers: sHeaders
+                });
+                if (streamSources.length >= 3) break;
               }
             } catch (_) {}
+          }
+
+          if (streamSources.length > 0) {
+            const primary = streamSources[0];
+            const alts = streamSources.slice(1);
+            return {
+              url: primary.url,
+              headers: primary.headers,
+              ...(alts.length > 0 ? { alternatives: alts } : {})
+            };
           }
         } catch (_) {}
       }
@@ -663,7 +684,7 @@ export async function resolve(ref, options) {
   const season = parsed.season;
   const number = parsed.number;
 
-  // Paso 1: Intentar resolución directa ultrarrápida HLS
+  // Paso 1: Intentar resolución directa ultrarrápida HLS con alternativas
   if (title) {
     try {
       const direct = await resolveDirectHls(title, season, number);
@@ -786,7 +807,7 @@ export async function action(key) {
 
 export async function settingsStatus() {
   await null;
-  return { status: "PelisPop 1.0.2 listo y sincronizado" };
+  return { status: `PelisPop ${PLUGIN_VERSION} listo y sincronizado` };
 }
 
 export async function validateSettings(values) {
