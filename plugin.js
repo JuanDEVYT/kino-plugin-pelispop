@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 2.0.2 - Fix búsqueda: candidato por palabra clave, timeout 20s, 1 capture.
+// Versión 2.0.3 - Fix: reconocer voe.sx directo desde watchfun sin pasar por nupload.
 // Cadena: repelisplus.my → watchfun.top → nupload.my → voe.sx (browser.capture directo).
 
-const PLUGIN_VERSION = "2.0.2";
+const PLUGIN_VERSION = "2.0.3";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -531,26 +531,34 @@ async function extractVoeUrl(key, pageUrl) {
     if (!buRes.ok) { kino.log("[resolve] watchfun status " + buRes.status); return null; }
     const buHtml = await buRes.text();
 
-    // watchfun devuelve un iframe con src de nupload.my
+    // watchfun devuelve un iframe con src de nupload.my o directamente voe.sx
     const iframeMatch = buHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
     if (!iframeMatch) { kino.log("[resolve] watchfun sin iframe"); return null; }
-    const nuploadUrl = iframeMatch[1];
-    kino.log("[resolve] nupload URL: " + nuploadUrl.substring(0, 60));
+    const iframeSrc = iframeMatch[1];
+    kino.log("[resolve] watchfun iframe: " + iframeSrc.substring(0, 60));
 
-    // nupload.my es un wrapper: su iframe interno apunta a voe.sx
-    const nuRes = await kino.fetch(nuploadUrl, {
-      headers: { "User-Agent": BROWSER_UA, "Referer": "https://watchfun.top/" }
-    });
-    if (!nuRes.ok) { kino.log("[resolve] nupload status " + nuRes.status); return null; }
-    const nuHtml = await nuRes.text();
-
-    const innerIframe = nuHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
-    if (innerIframe && innerIframe[1]) {
-      kino.log("[resolve] voe URL: " + innerIframe[1].substring(0, 60));
-      return innerIframe[1];
+    // Si el iframe ya apunta a voe.sx, usarlo directamente
+    if (iframeSrc.includes("voe.sx")) {
+      return iframeSrc;
     }
 
-    kino.log("[resolve] nupload sin iframe interno, len=" + nuHtml.length);
+    // Si apunta a nupload.my, buscar el iframe interno con voe.sx
+    if (iframeSrc.includes("nupload")) {
+      const nuRes = await kino.fetch(iframeSrc, {
+        headers: { "User-Agent": BROWSER_UA, "Referer": "https://watchfun.top/" }
+      });
+      if (!nuRes.ok) { kino.log("[resolve] nupload status " + nuRes.status); return null; }
+      const nuHtml = await nuRes.text();
+
+      const innerIframe = nuHtml.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+      if (innerIframe && innerIframe[1]) {
+        kino.log("[resolve] nupload->voe: " + innerIframe[1].substring(0, 60));
+        return innerIframe[1];
+      }
+
+      kino.log("[resolve] nupload sin iframe interno, len=" + nuHtml.length);
+    }
+
     return null;
   } catch (e) {
     kino.log("[resolve] extractVoeUrl error: " + String(e).substring(0, 80));
