@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 1.1.5 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
+// Versión 1.1.6 - Arquitectura Screen con estado Kino (state), navegación por rutas (route.push/pop)
 // y motor de resolución de video HLS rápido en español latino (sin Cloudflare 522/timeout).
 
-const PLUGIN_VERSION = "1.1.5";
+const PLUGIN_VERSION = "1.1.6";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -607,7 +607,7 @@ async function resolveDirectHls(title, season, episode) {
       const matches = Array.from(sHtml.matchAll(/<a[^>]+href=["\'](https:\/\/repelisplus\.my\/ver\/[^"\']+)["\']/gi));
       if (!matches || matches.length === 0) continue;
 
-      const targetUrls = matches.slice(0, 2).map((m) => m[1]);
+      const targetUrls = [matches[0][1]];
 
       for (const targetUrl of targetUrls) {
         try {
@@ -664,19 +664,26 @@ async function resolveDirectHls(title, season, episode) {
           const streamSources = results.filter((s) => s && s.url);
 
           if (streamSources.length > 0) {
-            const qualityStreams = [];
-            for (const st of streamSources) {
+            // Procesar todas las fuentes en paralelo sin demoras secuenciales
+            const variantResults = await Promise.all(streamSources.map(async (st) => {
               let variants = [];
               try {
-                const pRes = await kino.fetch(st.url, { headers: st.headers });
-                if (pRes.ok) {
+                const pRes = await Promise.race([
+                  kino.fetch(st.url, { headers: st.headers }),
+                  new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 1500))
+                ]);
+                if (pRes && pRes.ok) {
                   const m3u8Content = await pRes.text();
                   if (m3u8Content.includes("#EXT-X-STREAM-INF:")) {
                     variants = parseMasterPlaylist(m3u8Content, st.url);
                   }
                 }
               } catch (_) {}
+              return { st, variants };
+            }));
 
+            const qualityStreams = [];
+            for (const { st, variants } of variantResults) {
               if (variants.length > 0) {
                 for (const v of variants) {
                   qualityStreams.push({
