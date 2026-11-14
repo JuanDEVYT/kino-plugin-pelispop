@@ -1,8 +1,8 @@
 // Plugin PelisPop para Kino (kinotvapp.github.io)
-// Versión 2.0.3 - Fix: reconocer voe.sx directo desde watchfun sin pasar por nupload.
+// Versión 2.1.0 - browser:"pages" + kino.browser.page para extraer HLS de voe.sx sin capture.
 // Cadena: repelisplus.my → watchfun.top → nupload.my → voe.sx (browser.capture directo).
 
-const PLUGIN_VERSION = "2.0.3";
+const PLUGIN_VERSION = "2.1.0";
 if (typeof kino !== "undefined" && typeof kino.log === "function") {
   kino.log(`v${PLUGIN_VERSION} • creado por JuandreXter`);
 } else {
@@ -521,6 +521,37 @@ function formatAudioLabel(raw) {
   return raw ? ("🌐 " + raw) : "🇨🇴 Latino";
 }
 
+// Extrae la URL HLS/mp4 del HTML renderizado de voe.sx
+function extractHlsFromVoe(html) {
+  if (!html) return null;
+
+  // Patrón 1: "hls":"URL" o 'hls':'URL'
+  var m = html.match(/["']hls["']\s*:\s*["'](https?:\/\/[^"']+\.m3u8[^"']*)["']/);
+  if (m) return m[1];
+
+  // Patrón 2: "mp4":"URL"
+  m = html.match(/["']mp4["']\s*:\s*["'](https?:\/\/[^"']+\.mp4[^"']*)["']/);
+  if (m) return m[1];
+
+  // Patrón 3: "file":"URL" (jwplayer style)
+  m = html.match(/["']file["']\s*:\s*["'](https?:\/\/[^"']+(?:\.m3u8|\.mp4)[^"']*)["']/);
+  if (m) return m[1];
+
+  // Patrón 4: sources = {"hls":"URL",...}
+  m = html.match(/sources\s*=\s*\{[^}]*["']hls["']\s*:\s*["'](https?:\/\/[^"']+)["']/);
+  if (m) return m[1];
+
+  // Patrón 5: URL directa de m3u8 en cualquier parte
+  m = html.match(/(https?:\/\/[^\s"'<>]+\.m3u8[^\s"'<>]*)/);
+  if (m) return m[1];
+
+  // Patrón 6: URL directa de mp4 en cualquier parte (CDN)
+  m = html.match(/(https?:\/\/[^\s"'<>]+\.mp4[^\s"'<>]*)/);
+  if (m) return m[1];
+
+  return null;
+}
+
 // Extrae la URL de voe.sx desde un key de watchfun (solo HTTP, sin browser)
 async function extractVoeUrl(key, pageUrl) {
   try {
@@ -646,56 +677,59 @@ export async function resolve(ref, options) {
   const voeServers = title ? await getVoeUrls(title, season, number) : [];
   kino.log("[resolve] voeServers: " + voeServers.length);
 
-  // ── Paso 2: Capturar voe.sx directamente con kino.browser.capture ──
+  // ── Paso 2: Extraer HLS de voe.sx con kino.browser.page ──
   // voe.sx está detrás de DDoS-Guard: necesita ejecución JS del navegador.
-  // kino.browser.capture resuelve el challenge y detecta el HLS que voe reproduce.
-  // Máximo 2 intentos secuenciales (2 × 15s = 30s, bien dentro de los 75s).
-  if (voeServers.length > 0 && typeof kino !== "undefined" && kino.browser && typeof kino.browser.capture === "function") {
-    for (let i = 0; i < Math.min(voeServers.length, 1); i++) {
-      const srv = voeServers[i];
-      try {
-        kino.log("[resolve] paso 2: capture voe.sx " + srv.voeUrl.substring(0, 50));
-        const captured = await kino.browser.capture(srv.voeUrl, {
-          timeoutMs: 20000,
-          autoplay: true,
-          headers: {
-            "User-Agent": BROWSER_UA,
-            "Referer": "https://nupload.my/",
-            "Origin": "https://nupload.my"
-          }
-        });
-
-        if (captured && Array.isArray(captured.media) && captured.media.length > 0) {
-          const best = captured.media.find((m) => m && m.url && (m.url.includes(".m3u8") || m.url.includes(".mp4"))) || captured.media[0];
-          if (best && best.url) {
-            const audio = formatAudioLabel(srv.lang);
-            const hdrs = Object.assign({
-              "User-Agent": BROWSER_UA,
-              "Referer": srv.voeUrl,
-              "Origin": "https://voe.sx"
-            }, best.headers || {});
-
-            // Construir alternatives con los demás servidores que ya tenemos URLs
-            const alts = [];
-            for (let j = 0; j < voeServers.length; j++) {
-              if (j === i) continue;
-              alts.push({
-                label: "[1080p] Servidor " + (j + 1) + " (" + formatAudioLabel(voeServers[j].lang) + ")",
-                url: voeServers[j].voeUrl,
-                headers: hdrs
-              });
-            }
-
-            return {
-              url: best.url,
-              label: "[1080p] Servidor " + (i + 1) + " (" + audio + ")",
-              headers: hdrs,
-              ...(alts.length > 0 ? { alternatives: alts } : {}),
-              audioTracks: [{ language: srv.lang === "Latino" ? "es-419" : "es", label: audio }]
-            };
-          }
+  // kino.browser.page obtiene el HTML renderizado tras resolver el challenge.
+  // Luego extraemos la URL m3u8 del HTML con regex.
+  if (voeServers.length > 0 && typeof kino !== "undefined" && kino.browser && typeof kino.browser.page === "function") {
+    const srv = voeServers[0];
+    try {
+      kino.log("[resolve] paso 2: page voe.sx " + srv.voeUrl.substring(0, 50));
+      const pageResult = await kino.browser.page(srv.voeUrl, {
+        timeoutMs: 25000,
+        headers: {
+          "User-Agent": BROWSER_UA,
+          "Referer": "https://nupload.my/"
         }
-      } catch (_) {}
+      });
+
+      if (pageResult && pageResult.html) {
+        kino.log("[resolve] page HTML len=" + pageResult.html.length);
+        const hlsUrl = extractHlsFromVoe(pageResult.html);
+        if (hlsUrl) {
+          kino.log("[resolve] HLS encontrado: " + hlsUrl.substring(0, 60));
+          const audio = formatAudioLabel(srv.lang);
+          const hdrs = {
+            "User-Agent": BROWSER_UA,
+            "Referer": srv.voeUrl,
+            "Origin": "https://voe.sx"
+          };
+
+          // Construir alternatives con los demás servidores
+          const alts = [];
+          for (let j = 1; j < voeServers.length; j++) {
+            alts.push({
+              label: "[1080p] Servidor " + (j + 1) + " (" + formatAudioLabel(voeServers[j].lang) + ")",
+              url: voeServers[j].voeUrl,
+              headers: hdrs
+            });
+          }
+
+          return {
+            url: hlsUrl,
+            label: "[1080p] Servidor 1 (" + audio + ")",
+            headers: hdrs,
+            ...(alts.length > 0 ? { alternatives: alts } : {}),
+            audioTracks: [{ language: srv.lang === "Latino" ? "es-419" : "es", label: audio }]
+          };
+        } else {
+          kino.log("[resolve] no se encontró m3u8 en HTML de voe.sx");
+        }
+      } else {
+        kino.log("[resolve] page voe.sx sin HTML");
+      }
+    } catch (e) {
+      kino.log("[resolve] page voe.sx error: " + String(e).substring(0, 80));
     }
   }
 
